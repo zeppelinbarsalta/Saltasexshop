@@ -658,7 +658,7 @@ function ensureUsers(){
   if(!store.users.admin)store.users.admin={role:'admin',pass:hashPass('220708'),tabs:ALL_TABS.slice()};
   store.users.admin.role='admin';store.users.admin.tabs=ALL_TABS.slice();
 }
-function save(localOnly){localStorage.setItem(LS_KEY,JSON.stringify(store));if(!localOnly&&CLOUD.url)cloudPush();}
+function save(localOnly){store.updatedAt=Date.now();localStorage.setItem(LS_KEY,JSON.stringify(store));if(!localOnly&&CLOUD.url)cloudPush();}
 
 /* ---------- Sincronización con la nube ---------- */
 let cloudPushTimer=null, cloudReady=false;
@@ -672,14 +672,20 @@ async function cloudPull(){
   if(!cloudEnabled()){setCloudStatus('off');return;}
   setCloudStatus('sync');
   try{
+    const localT=(store&&store.updatedAt)||0;
     const r=await fetch(CLOUD.url+'?token='+encodeURIComponent(CLOUD.token),{method:'GET'});
     const j=await r.json();
     if(!j||!j.ok)throw new Error('auth');
     if(j.data){
       const remote=JSON.parse(j.data);
-      if(remote&&remote.periodos){
-        store=remote;normalizeStore(false);save(true); // adopta remoto, cachea local sin re-subir
+      const remoteT=(remote&&remote.updatedAt)||0;
+      if(remote&&remote.periodos&&remoteT>=localT){
+        // el remoto es más nuevo (o igual): lo adopto y cacheo tal cual (sin re-subir ni cambiar su fecha)
+        store=remote;normalizeStore(false);localStorage.setItem(LS_KEY,JSON.stringify(store));
         if(currentUser){if(store.users[currentUser.name]){setCurrent(currentUser.name);applyPermissions();renderAll();}else{logout();}}
+      }else{
+        // lo local es más nuevo (cambios sin subir): los subo, no los piso
+        cloudPush(true);
       }
     }else{
       cloudPush(true); // remoto vacío: subo lo local por primera vez
@@ -693,7 +699,6 @@ function cloudPush(now){
   const doPush=async()=>{
     setCloudStatus('sync');
     try{
-      store.updatedAt=Date.now();localStorage.setItem(LS_KEY,JSON.stringify(store));
       await fetch(CLOUD.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:CLOUD.token,data:JSON.stringify(store)})});
       setCloudStatus('cloud');
     }catch(e){setCloudStatus('offline');}
@@ -1192,14 +1197,16 @@ function renderClasif(){
 const AUTH_KEY='caja_sexshop_user';
 let currentUser=null;
 function firstAllowedTab(){return (currentUser&&ALL_TABS.find(t=>currentUser.tabs.includes(t)))||'diario';}
+function findUserKey(name){name=(name||'').trim().toLowerCase();return Object.keys(store.users||{}).find(k=>k.toLowerCase()===name);}
 function setCurrent(name){const u=store.users[name];if(!u)return false;currentUser={name,role:u.role,tabs:u.tabs.slice()};return true;}
 function showLogin(){document.getElementById('loginOverlay').style.display='flex';document.getElementById('liUser').value='';document.getElementById('liPass').value='';document.getElementById('liErr').textContent='';document.getElementById('liUser').focus();}
 function doLogin(){
   const name=document.getElementById('liUser').value.trim();
   const pass=document.getElementById('liPass').value;
-  const u=store.users[name];
+  const key=findUserKey(name);
+  const u=key?store.users[key]:null;
   if(!u||u.pass!==hashPass(pass)){document.getElementById('liErr').textContent='Usuario o clave incorrectos';return;}
-  setCurrent(name);sessionStorage.setItem(AUTH_KEY,name);enterApp();
+  setCurrent(key);sessionStorage.setItem(AUTH_KEY,key);enterApp();
 }
 function logout(){currentUser=null;sessionStorage.removeItem(AUTH_KEY);showLogin();}
 function enterApp(){
@@ -1233,14 +1240,14 @@ function addUser(){
   const name=document.getElementById('uName').value.trim();
   const pass=document.getElementById('uPass').value;
   if(!name){toast('Poné un nombre de usuario');return;}
-  if(store.users[name]){toast('Ese usuario ya existe');return;}
+  if(findUserKey(name)){toast('Ese usuario ya existe');return;}
   if(!pass){toast('Poné una clave');return;}
   const tabs=[...document.querySelectorAll('#uTabs input:checked')].map(i=>i.value);
   if(!tabs.length){toast('Marcá al menos una pestaña');return;}
   store.users[name]={role:'user',pass:hashPass(pass),tabs};
   document.getElementById('uName').value='';document.getElementById('uPass').value='';
   document.querySelectorAll('#uTabs input:checked').forEach(i=>i.checked=false);
-  save();renderUsers();toast('Usuario agregado');
+  save();renderUsers();toast('Usuario "'+name+'" creado');
 }
 function removeUser(name){
   if(name==='admin')return;
