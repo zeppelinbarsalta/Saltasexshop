@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caja · Salta Sex Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --magenta:#DD01D0; --black:#0A0A0A; --white:#FFFFFF;
+  --g1:#777777; --g2:#AAAAAA;
+  --panel:#141414; --panel2:#1c1c1c; --line:#2a2a2a;
+  --pos:#39d98a; --neg:#ff5a6e; --warn:#ffb020;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--black); color:var(--white);
+  font-family:'DM Sans',system-ui,sans-serif; font-weight:300;
+  -webkit-font-smoothing:antialiased; line-height:1.4;
+}
+h1,h2,h3{font-weight:300}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+
+/* Header */
+header{
+  position:sticky;top:0;z-index:50;background:rgba(10,10,10,.92);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+}
+.hbar{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1}
+.brand .t1{font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:26px;letter-spacing:.5px}
+.brand .t1 b{color:var(--magenta)}
+.brand .t2{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--g1);margin-top:4px}
+.spacer{flex:1}
+.periodo select,.periodo button{font-family:inherit}
+select,input,button{font-family:inherit;font-weight:300}
+.periodo{display:flex;align-items:center;gap:8px}
+.sel{
+  background:var(--panel2);color:var(--white);border:1px solid var(--line);
+  padding:8px 12px;border-radius:10px;font-size:14px;cursor:pointer;
+}
+.sel:focus{outline:none;border-color:var(--magenta)}
+.btn{
+  background:var(--magenta);color:#fff;border:none;padding:9px 16px;border-radius:10px;
+  font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.3px;transition:.15s;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--g2)}
+.btn.ghost:hover{border-color:var(--magenta);color:#fff}
+.btn.sm{padding:6px 11px;font-size:12px}
+
+/* Tabs */
+nav.tabs{display:flex;gap:4px;padding:16px 0 8px}
+.tab{
+  background:transparent;border:none;color:var(--g1);padding:10px 18px;border-radius:10px;
+  font-size:15px;cursor:pointer;letter-spacing:.3px;position:relative;
+}
+.tab.active{color:#fff;background:var(--panel)}
+.tab.active::after{content:"";position:absolute;left:18px;right:18px;bottom:4px;height:2px;background:var(--magenta);border-radius:2px}
+
+/* Layout */
+.grid{display:grid;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.panel h3{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:14px;font-weight:400}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.col{flex:1;min-width:0}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.kpi .lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--g1)}
+.kpi .val{font-size:26px;margin-top:8px;font-weight:400;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:12px;color:var(--g2);margin-top:4px}
+.kpi.accent .val{color:var(--magenta)}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .warnc{color:var(--warn)}
+
+/* Session selector */
+.sessbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+.sessbar .grp{display:flex;align-items:center;gap:8px}
+.seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{background:transparent;border:none;color:var(--g2);padding:8px 16px;cursor:pointer;font-size:14px}
+.seg button.on{background:var(--magenta);color:#fff}
+label.fld{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--g1);display:block;margin-bottom:6px}
+
+/* Movement form */
+.mform{display:grid;grid-template-columns:1.4fr 1fr .7fr 1.1fr auto 1fr auto;gap:10px;align-items:end}
+.mform input,.mform select{
+  width:100%;background:var(--panel2);color:#fff;border:1px solid var(--line);
+  padding:10px 12px;border-radius:10px;font-size:14px;
+}
+.mform input:focus,.mform select:focus{outline:none;border-color:var(--magenta)}
+.tipoSeg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tipoSeg button{background:var(--panel2);border:none;color:var(--g2);padding:10px 12px;cursor:pointer;font-size:12px}
+.tipoSeg button.onE{background:var(--pos);color:#062}
+.tipoSeg button.onS{background:var(--neg);color:#400}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:400;color:var(--g1);font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid #1f1f1f;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+.num{text-align:right}
+.mut{color:var(--g1)}
+.chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;border:1px solid var(--line);color:var(--g2)}
+.del{color:var(--g1);cursor:pointer;background:none;border:none;font-size:16px;line-height:1;padding:2px 6px;border-radius:6px}
+.del:hover{color:var(--neg);background:#2a1418}
+.empty{color:var(--g1);text-align:center;padding:26px;font-style:italic}
+
+/* Arqueo grid */
+.arqueo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.denom{display:grid;grid-template-columns:1fr 70px 1fr;gap:6px 10px;align-items:center}
+.denom .dh{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--g1)}
+.denom .dv{color:var(--g2)}
+.denom input{width:100%;background:var(--panel2);color:#fff;border:1px solid var(--line);padding:7px 9px;border-radius:8px;text-align:center;font-size:14px}
+.denom input:focus{outline:none;border-color:var(--magenta)}
+.denom .tot{text-align:right;font-variant-numeric:tabular-nums;color:var(--g2)}
+.arqline{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1f1f1f;font-size:14px}
+.arqline b{font-weight:500;font-variant-numeric:tabular-nums}
+.diffbox{margin-top:12px;padding:14px;border-radius:12px;text-align:center;background:var(--panel2);border:1px solid var(--line)}
+.diffbox .dl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--g1)}
+.diffbox .dv{font-size:24px;margin-top:6px;font-variant-numeric:tabular-nums}
+
+/* Category bars */
+.catgrp{margin-bottom:16px}
+.catgrp .gh{font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:16px;color:var(--magenta);margin-bottom:8px}
+.catrow{display:grid;grid-template-columns:1fr 120px 60px;gap:10px;align-items:center;padding:6px 0;font-size:13.5px}
+.catrow .bar{height:6px;background:#222;border-radius:4px;overflow:hidden;position:relative}
+.catrow .bar>i{position:absolute;left:0;top:0;bottom:0;background:var(--magenta);border-radius:4px}
+.catrow .amt{text-align:right;font-variant-numeric:tabular-nums;color:var(--g2)}
+.catrow .pct{text-align:right;color:var(--g1);font-size:12px}
+
+.hint{font-size:12px;color:var(--g1);margin-top:8px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--magenta);color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:100}
+.toast.show{opacity:1}
+@media(max-width:860px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .mform{grid-template-columns:1fr 1fr}
+  .arqueo{grid-template-columns:1fr}
+  .row{flex-direction:column}
+}
+/* Auth */
+.loginOverlay{position:fixed;inset:0;z-index:200;background:radial-gradient(circle at 50% 25%, #1a0a1a, #050505);display:flex;align-items:center;justify-content:center;padding:20px}
+.loginCard{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px 26px}
+.loginCard .brand{margin-bottom:20px;text-align:center;align-items:center}
+.loginCard .brand .t1{font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:30px}
+.loginCard .brand .t1 b{color:var(--magenta)}
+.loginCard .brand .t2{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--g1);margin-top:6px}
+.loginCard label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--g1);display:block;margin:14px 0 6px}
+.loginCard input{width:100%;background:var(--panel2);color:#fff;border:1px solid var(--line);padding:11px 13px;border-radius:10px;font-size:15px}
+.loginCard input:focus{outline:none;border-color:var(--magenta)}
+.loginCard button{width:100%;margin-top:20px;background:var(--magenta);color:#fff;border:none;padding:12px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer}
+.loginErr{color:var(--neg);font-size:13px;margin-top:12px;min-height:16px;text-align:center}
+.userChip{display:flex;align-items:center;gap:10px;color:var(--g2);font-size:13px}
+.cloudDot{font-size:12px;color:var(--g1);cursor:pointer;padding:5px 10px;border:1px solid var(--line);border-radius:20px;white-space:nowrap;user-select:none}
+.cloudDot[data-st="cloud"]{color:var(--pos);border-color:#1e3a2a}
+.cloudDot[data-st="sync"]{color:var(--warn);border-color:#3a3020}
+.cloudDot[data-st="offline"]{color:var(--neg);border-color:#3a1c22}
+.userChip b{color:#fff;font-weight:500}
+.uTabsWrap{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.uTab{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--g2);background:var(--panel2);border:1px solid var(--line);padding:7px 11px;border-radius:9px;cursor:pointer}
+.uTab input{accent-color:var(--magenta)}
+.donutWrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.donutWrap svg{flex-shrink:0}
+.legend{flex:1;min-width:150px;display:flex;flex-direction:column;gap:6px}
+.lgd{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.lgd .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.lgd .ln{color:var(--g2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgd .lv{color:var(--g1);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chartBox{overflow-x:auto;padding-top:4px}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.stat2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.statAuto{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+@media(max-width:860px){.stat3,.stat2{grid-template-columns:1fr}}
+.editchips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.echip{display:inline-flex;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 6px 5px 13px;font-size:13px;color:var(--g2)}
+.echip .x{cursor:pointer;color:var(--g1);background:#242424;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
+.echip .x:hover{color:#fff;background:var(--neg)}
+.addinline{display:inline-flex;gap:6px;align-items:center}
+.addinline input{background:var(--panel2);border:1px solid var(--line);color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;width:130px}
+.addinline input:focus{outline:none;border-color:var(--magenta)}
+.addinline button{background:var(--magenta);color:#fff;border:none;border-radius:8px;width:28px;height:28px;font-size:17px;cursor:pointer;line-height:1}
+.catEditGrp{margin-bottom:16px}
+.catEditGrp .gh{font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:15px;color:var(--magenta);margin-bottom:9px}
+</style>
+</head>
+<body>
+<div id="loginOverlay" class="loginOverlay">
+  <div class="loginCard">
+    <div class="brand">
+      <span class="t1">Salta <b>Sex Shop</b></span>
+      <span class="t2">Caja · Acceso</span>
+    </div>
+    <label>Usuario</label>
+    <input id="liUser" type="text" autocomplete="username" autocapitalize="none" spellcheck="false">
+    <label>Clave</label>
+    <input id="liPass" type="password" autocomplete="current-password">
+    <button id="liBtn">Ingresar</button>
+    <div class="loginErr" id="liErr"></div>
+  </div>
+</div>
+
+<header>
+  <div class="hbar">
+    <div class="brand">
+      <span class="t1">Salta <b>Sex Shop</b></span>
+      <span class="t2">Caja · Control diario</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="periodo">
+      <select id="periodoSel" class="sel"></select>
+      <button class="btn ghost sm" id="newPeriodo">+ Mes</button>
+      <button class="btn sm" id="exportBtn">Exportar Excel</button>
+      <span class="cloudDot" id="cloudStatus" title="sin nube" data-st="off">⚪ Local</span>
+      <div class="userChip"><span>👤 <b id="userName">—</b></span><button class="btn ghost sm" id="logoutBtn">Salir</button></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs">
+    <button class="tab active" data-view="diario">Diario</button>
+    <button class="tab" data-view="admin">Administración</button>
+    <button class="tab" data-view="mensual">Mensual</button>
+    <button class="tab" data-view="stats">Estadísticas</button>
+    <button class="tab" data-view="ajustes">Ajustes</button>
+  </nav>
+
+  <!-- ================= DIARIO ================= -->
+  <section id="view-diario">
+    <div class="panel" style="margin-bottom:16px">
+      <div class="sessbar">
+        <div class="grp">
+          <label class="fld" style="margin:0">Día</label>
+          <select id="daySel" class="sel"></select>
+        </div>
+        <div class="grp">
+          <label class="fld" style="margin:0">Turno</label>
+          <div class="seg" id="sessSeg">
+            <button data-s="M" class="on">M</button>
+            <button data-s="T">T</button>
+            <button data-s="N">N</button>
+          </div>
+        </div>
+        <div class="spacer" style="flex:1"></div>
+        <div class="grp mut" style="font-size:13px">
+          Caja inicial (efvo): <b id="cajaIniLbl" style="color:#fff;margin-left:6px">$0</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpis" style="margin-bottom:16px">
+      <div class="kpi accent"><div class="lbl">Ventas turno</div><div class="val" id="kVentas">$0</div></div>
+      <div class="kpi"><div class="lbl">Egresos turno</div><div class="val" id="kEgresos">$0</div></div>
+      <div class="kpi"><div class="lbl">Saldo caja</div><div class="val" id="kSaldo">$0</div><div class="sub">inicial + neto</div></div>
+      <div class="kpi"><div class="lbl">Dif. arqueo efvo</div><div class="val" id="kDif">$0</div><div class="sub" id="kDifSub">contado − esperado</div></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px">
+      <h3>Cargar movimiento</h3>
+      <div class="mform">
+        <div>
+          <label class="fld">Concepto</label>
+          <select id="mConcepto"></select>
+        </div>
+        <div>
+          <label class="fld">Canal</label>
+          <select id="mCanal"></select>
+        </div>
+        <div>
+          <label class="fld">N° Vta</label>
+          <input id="mNVta" type="text" inputmode="numeric" placeholder="—">
+        </div>
+        <div>
+          <label class="fld">Forma de pago</label>
+          <select id="mPago"></select>
+        </div>
+        <div>
+          <label class="fld">Tipo</label>
+          <div class="tipoSeg" id="mTipo">
+            <button data-t="E" class="onE">Entra</button>
+            <button data-t="S">Sale</button>
+          </div>
+        </div>
+        <div>
+          <label class="fld">Monto</label>
+          <input id="mMonto" type="text" inputmode="numeric" placeholder="0">
+        </div>
+        <div>
+          <button class="btn" id="addMov" style="width:100%;padding:10px 0">Agregar</button>
+        </div>
+      </div>
+      <div class="hint">Ventas = Entra · gastos y retiros = Sale. Podés cambiar el tipo para devoluciones/ajustes. Enter agrega.</div>
+    </div>
+
+    <div class="row">
+      <div class="col panel">
+        <h3>Movimientos de la turno</h3>
+        <div style="overflow-x:auto">
+          <table id="movTable">
+            <thead><tr>
+              <th>Concepto</th><th>Canal</th><th>N° Vta</th><th>Pago</th>
+              <th class="num">Entra</th><th class="num">Sale</th><th class="num">Saldo</th><th></th>
+            </tr></thead>
+            <tbody id="movBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <div class="col panel" style="max-width:420px">
+        <h3>Saldo por cuenta</h3>
+        <table>
+          <thead><tr><th>Cuenta</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo</th></tr></thead>
+          <tbody id="cuentaBody"></tbody>
+        </table>
+      </div>
+      <div class="col panel">
+        <h3>Arqueo de caja (efectivo)</h3>
+        <div class="arqueo">
+          <div>
+            <div class="denom">
+              <span class="dh">Nominación</span><span class="dh" style="text-align:center">Cant.</span><span class="dh" style="text-align:right">Total</span>
+              <div id="denomInputs" style="display:contents"></div>
+            </div>
+            <div class="arqline" style="margin-top:8px"><span>Total contado (cierre)</span><b id="contadoTot">$0</b></div>
+          </div>
+          <div>
+            <div class="arqline"><span class="mut">Caja inicial efvo</span><b id="arqIni">$0</b></div>
+            <div class="arqline"><span class="mut">+ Ventas efvo</span><b id="arqVtas">$0</b></div>
+            <div class="arqline"><span class="mut">− Egresos efvo</span><b id="arqEgr">$0</b></div>
+            <div class="arqline"><span>= Esperado en caja</span><b id="arqEsp">$0</b></div>
+            <div class="diffbox">
+              <div class="dl">Diferencia</div>
+              <div class="dv" id="arqDif">$0</div>
+            </div>
+            <div class="hint">La caja inicial de cada turno se hereda del cierre de la turno anterior.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Gastos de la turno por categoría</h3>
+      <div id="catSession"></div>
+    </div>
+  </section>
+
+  <!-- ================= ADMINISTRACIÓN ================= -->
+  <section id="view-admin" style="display:none">
+    <div class="kpis" style="margin-bottom:16px">
+      <div class="kpi"><div class="lbl">Egresos administración</div><div class="val" id="akEgr">$0</div><div class="sub">costos fuera de caja</div></div>
+      <div class="kpi accent"><div class="lbl">Mercadería (COGS)</div><div class="val" id="akCogs">$0</div></div>
+      <div class="kpi"><div class="lbl">Costo laboral</div><div class="val" id="akLabor">$0</div></div>
+      <div class="kpi"><div class="lbl">Fijos + servicios</div><div class="val" id="akFijo">$0</div></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px">
+      <h3>Cargar costo / gasto de administración</h3>
+      <div class="mform" style="grid-template-columns:1.4fr 1.4fr .9fr 1fr auto 1fr auto">
+        <div>
+          <label class="fld">Concepto</label>
+          <select id="aConcepto"></select>
+        </div>
+        <div>
+          <label class="fld">Detalle</label>
+          <input id="aDetalle" type="text" placeholder="proveedor / factura / empleado">
+        </div>
+        <div>
+          <label class="fld">Día</label>
+          <select id="aDia"></select>
+        </div>
+        <div>
+          <label class="fld">Forma de pago</label>
+          <select id="aPago"></select>
+        </div>
+        <div>
+          <label class="fld">Tipo</label>
+          <div class="tipoSeg" id="aTipo">
+            <button data-t="S" class="onS">Sale</button>
+            <button data-t="E">Entra</button>
+          </div>
+        </div>
+        <div>
+          <label class="fld">Monto</label>
+          <input id="aMonto" type="text" inputmode="numeric" placeholder="0">
+        </div>
+        <div>
+          <button class="btn" id="addAdmin" style="width:100%;padding:10px 0">Agregar</button>
+        </div>
+      </div>
+      <div class="hint">Acá cargás lo que NO pasa por la caja diaria: compras a proveedores, sueldos, cargas sociales, servicios, alquiler pagado por banco, etc. Alimenta las Estadísticas (Prime Cost y punto de equilibrio) pero no afecta el arqueo de caja.</div>
+    </div>
+
+    <div class="row">
+      <div class="col panel">
+        <h3>Movimientos de administración — <span id="adminMes" style="text-transform:none;letter-spacing:0;color:var(--g2)"></span></h3>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Día</th><th>Concepto</th><th>Detalle</th><th>Pago</th><th class="num">Entra</th><th class="num">Sale</th><th></th></tr></thead>
+            <tbody id="adminBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Resumen por categoría (administración)</h3>
+      <div id="adminCat"></div>
+    </div>
+  </section>
+
+  <!-- ================= MENSUAL ================= -->
+  <section id="view-mensual" style="display:none">
+    <div class="kpis" style="margin-bottom:16px">
+      <div class="kpi accent"><div class="lbl">Ventas del mes</div><div class="val" id="mkVentas">$0</div></div>
+      <div class="kpi"><div class="lbl">Egresos del mes</div><div class="val" id="mkEgresos">$0</div><div class="sub" id="mkEgrPct">0% s/ventas</div></div>
+      <div class="kpi"><div class="lbl">Saldo caja</div><div class="val" id="mkSaldo">$0</div></div>
+      <div class="kpi"><div class="lbl">Dif. arqueo acum.</div><div class="val" id="mkDif">$0</div></div>
+    </div>
+
+    <div class="row">
+      <div class="col panel" style="max-width:460px">
+        <h3>Saldo por cuenta (mes)</h3>
+        <table>
+          <thead><tr><th>Cuenta</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo</th></tr></thead>
+          <tbody id="mCuentaBody"></tbody>
+        </table>
+      </div>
+      <div class="col panel">
+        <h3>Egresos por categoría (mes)</h3>
+        <div id="mCat"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Saldo diario</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Turno</th><th class="num">Ventas</th><th class="num">Egresos</th><th class="num">Saldo acum.</th><th class="num">Dif. arqueo</th></tr></thead>
+          <tbody id="mDaily"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESTADÍSTICAS ================= -->
+  <section id="view-stats" style="display:none">
+    <div class="sessbar" style="margin-bottom:16px">
+      <div class="seg" id="statScopeSeg">
+        <button data-sc="mes" class="on">Mes</button>
+        <button data-sc="anio">Año</button>
+        <button data-sc="hist">Histórico</button>
+      </div>
+      <div class="spacer" style="flex:1"></div>
+      <span class="mut" id="statScopeLbl" style="font-size:13px"></span>
+    </div>
+    <div class="kpis" id="statKpis" style="margin-bottom:16px"></div>
+    <div id="statBody"></div>
+    <div class="panel" style="margin-top:16px">
+      <h3>Clasificación de categorías <span style="color:var(--g1);text-transform:none;letter-spacing:0;font-size:11px">(afecta Prime Cost y punto de equilibrio, en todas las vistas)</span></h3>
+      <div class="hint" style="margin-bottom:12px">Mercadería = costo variable de producto (COGS). Laboral = sueldos. Fijo = no varía con ventas. Variable = escala con la actividad. Excluir = no computa (ej. transferencias al bar).</div>
+      <div id="clasifGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= AJUSTES ================= -->
+  <section id="view-ajustes" style="display:none">
+    <div class="row">
+      <div class="col panel">
+        <h3>Caja inicial del mes</h3>
+        <p class="hint" style="margin-bottom:12px">Monto con el que arranca la caja (día 1 · turno M). El resto de las turnos se encadenan solas desde cada cierre.</p>
+        <div style="max-width:360px">
+          <label class="fld">Monto de caja inicial</label>
+          <input id="aperturaMontoInput" class="sel" style="width:100%;font-size:16px" type="text" inputmode="numeric" placeholder="0">
+        </div>
+        <details style="max-width:360px;margin-top:14px">
+          <summary style="cursor:pointer;color:var(--g1);font-size:13px">Detalle por billete (opcional)</summary>
+          <p class="hint" style="margin:8px 0">Si contás los billetes, este detalle reemplaza al monto de arriba.</p>
+          <div class="denom">
+            <span class="dh">Nominación</span><span class="dh" style="text-align:center">Cant.</span><span class="dh" style="text-align:right">Total</span>
+            <div id="aperturaInputs" style="display:contents"></div>
+          </div>
+          <div class="arqline" style="margin-top:8px"><span>Total por billetes</span><b id="aperturaTot">$0</b></div>
+        </details>
+      </div>
+      <div class="col panel" style="max-width:380px">
+        <h3>Datos</h3>
+        <p class="hint" style="margin-bottom:12px">Se guarda automáticamente en este navegador (localStorage). Exportá a Excel para respaldo.</p>
+        <button class="btn sm" id="seedBtn" style="margin-bottom:10px">Precargar Junio 2026 (datos reales)</button>
+        <button class="btn ghost sm" id="importBtn" style="margin-bottom:10px">Importar respaldo (.json)</button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+        <button class="btn ghost sm" id="backupBtn" style="margin-bottom:10px">Descargar respaldo (.json)</button>
+        <button class="btn ghost sm" id="wipeBtn" style="color:var(--neg);border-color:#3a1c22">Borrar mes actual</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h3>Conexión a la nube</h3>
+      <p class="hint" style="margin-bottom:12px">Pegá la URL <b>/exec</b> del Web App de Apps Script y la clave (SECRET). Se guarda <b>en este dispositivo</b>, no en el repositorio. Configurá esto una vez en cada dispositivo para compartir el mismo historial. Estado actual: <span id="cloudMsg" class="mut">—</span></p>
+      <div class="row" style="gap:12px;align-items:end">
+        <div style="flex:2;min-width:240px"><label class="fld">URL del Web App (/exec)</label><input id="cloudUrl" class="sel" style="width:100%" type="text" placeholder="https://script.google.com/macros/s/.../exec"></div>
+        <div style="flex:1;min-width:160px"><label class="fld">Clave (SECRET)</label><input id="cloudToken" class="sel" style="width:100%" type="text" placeholder="clave"></div>
+        <button class="btn sm" id="cloudConnect">Conectar</button>
+      </div>
+      <div style="margin-top:10px"><button class="btn ghost sm" id="cloudDisconnect" style="color:var(--neg);border-color:#3a1c22">Desconectar de este dispositivo</button></div>
+    </div>
+    <div class="panel" id="usersPanel" style="margin-top:16px">
+      <h3>Usuarios y accesos</h3>
+      <p class="hint" style="margin-bottom:12px">El administrador ve todo. Los demás usuarios acceden solo a las pestañas que les habilites. La pestaña Ajustes es exclusiva del administrador.</p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Usuario</th><th>Rol</th><th>Pestañas habilitadas</th><th></th></tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
+        <h3 style="margin-bottom:10px">Agregar usuario</h3>
+        <div class="row" style="gap:12px;align-items:end">
+          <div style="min-width:150px"><label class="fld">Usuario</label><input id="uName" class="sel" style="width:100%" type="text" autocapitalize="none" spellcheck="false" placeholder="nombre"></div>
+          <div style="min-width:150px"><label class="fld">Clave</label><input id="uPass" class="sel" style="width:100%" type="text" placeholder="clave"></div>
+        </div>
+        <div class="uTabsWrap" id="uTabs"></div>
+        <button class="btn sm" id="addUser" style="margin-top:6px">Agregar usuario</button>
+      </div>
+      <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
+        <h3 style="margin-bottom:10px">Cambiar clave del administrador</h3>
+        <div class="row" style="gap:12px;align-items:end">
+          <div style="min-width:180px"><label class="fld">Nueva clave admin</label><input id="adminPass" class="sel" style="width:100%" type="text" placeholder="nueva clave"></div>
+          <button class="btn ghost sm" id="setAdminPass">Guardar clave</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h3>Formas de pago</h3>
+      <p class="hint" style="margin-bottom:12px">"Efectivo" es fijo (el arqueo depende de él). No se puede eliminar una forma de pago que ya tenga movimientos cargados.</p>
+      <div id="payEditor"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+        <input id="newPay" class="sel" style="max-width:220px" type="text" placeholder="nueva forma de pago">
+        <button class="btn sm" id="addPay">Agregar</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h3>Canales de venta</h3>
+      <p class="hint" style="margin-bottom:12px">Se eligen al cargar cada venta y alimentan las estadísticas (ventas por canal).</p>
+      <div id="canalEditor"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+        <input id="newCanal" class="sel" style="max-width:220px" type="text" placeholder="nuevo canal">
+        <button class="btn sm" id="addCanal">Agregar</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h3>Categorías de conceptos</h3>
+      <p class="hint" style="margin-bottom:14px">Agregá o quitá ítems en cada grupo. No se puede eliminar un ítem que ya tenga movimientos cargados.</p>
+      <div id="catEditor"></div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------- Modelo (replicado de la planilla) ---------- */
+const DEFAULT_CATS = [
+  {group:'Publicidad', items:['Google Ads','Trafic Factory','Avanza ADS']},
+  {group:'Compras', items:['SSM','Buttman','Extasy','Caiman','Miss V','Igalfer','Farmacia Mendoza','Sexy Eden','Malena','4bidden','Ohlala cheri','Pilas','li chang','Otros']},
+  {group:'Descartables', items:['Bolsas','Imprenta','Libreria']},
+  {group:'Gastos Variables', items:['Descuentos','Cadeteria','Correo Argentino','Tienda Nube','Luker','Fletes','Punto de Venta TN','Pagos/Prestamos/Bar']},
+  {group:'Gastos fijos', items:['Sueldos','Aguinaldos','Redes','Alarma','Telefono','Alquiler','Internet','Mantenimiento']},
+];
+const DEFAULT_PAYMENTS = ['Efectivo','Mercado Pago','Transf Bancaria','Uala','NX','Payway']; // idx0 = Efectivo (arqueo)
+const DEFAULT_CANALES = ['Web','Chat','Presencial','Llamada','Redes'];
+let CATS = DEFAULT_CATS.map(g=>({group:g.group,items:g.items.slice()}));
+let CAT_ITEMS = CATS.flatMap(g=>g.items);
+let PAYMENTS = DEFAULT_PAYMENTS.slice();
+let CANALES = DEFAULT_CANALES.slice();
+function refreshCats(){CATS=store.config.cats;PAYMENTS=store.config.payments;CANALES=store.config.canales;CAT_ITEMS=CATS.flatMap(g=>g.items);}
+const DENOMS = [20000,10000,2000,1000,500,200,100];
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const INGRESO_CONCEPTS = ['Ventas','Otro ingreso'];
+const SEED_JUNIO = {"mes":"Junio","anio":2026,"apertura":{"20000":0,"10000":5,"2000":0,"1000":0,"500":0,"200":0,"100":0},"sessions":{"1F":{"movimientos":[{"concepto":"Ventas","nvta":"8881","pago":5,"tipo":"E","monto":47000},{"concepto":"Cadeteria","nvta":"","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8882","pago":4,"tipo":"E","monto":43200},{"concepto":"Ventas","nvta":"8883","pago":4,"tipo":"E","monto":44150},{"concepto":"Cadeteria","nvta":"8883","pago":0,"tipo":"S","monto":2000},{"concepto":"Ventas","nvta":"8863","pago":4,"tipo":"E","monto":64514},{"concepto":"Ventas","nvta":"8887","pago":3,"tipo":"E","monto":53000},{"concepto":"Cadeteria","nvta":"8863","pago":0,"tipo":"S","monto":3000},{"concepto":"Cadeteria","nvta":"8887","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"8888","pago":4,"tipo":"E","monto":52100}],"cierre":{"20000":0,"10000":3,"2000":2,"1000":4,"500":0,"200":0,"100":0}},"1A":{"movimientos":[{"concepto":"Ventas","nvta":"8889","pago":4,"tipo":"E","monto":286900},{"concepto":"Ventas","nvta":"8890","pago":3,"tipo":"E","monto":53000},{"concepto":"Ventas","nvta":"8891","pago":5,"tipo":"E","monto":54000},{"concepto":"Cadeteria","nvta":"8890","pago":0,"tipo":"S","monto":5000}],"cierre":{"20000":0,"10000":3,"2000":1,"1000":1,"500":0,"200":0,"100":0}},"2F":{"movimientos":[{"concepto":"Ventas","nvta":"8892","pago":4,"tipo":"E","monto":148612},{"concepto":"Ventas","nvta":"8893","pago":4,"tipo":"E","monto":98199},{"concepto":"Ventas","nvta":"8894","pago":4,"tipo":"E","monto":19800},{"concepto":"Ventas","nvta":"8895","pago":4,"tipo":"E","monto":49500},{"concepto":"Ventas","nvta":"8896","pago":4,"tipo":"E","monto":35000},{"concepto":"Cadeteria","nvta":"8892","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8897","pago":5,"tipo":"E","monto":47500},{"concepto":"Ventas","nvta":"8898","pago":4,"tipo":"E","monto":65112},{"concepto":"Cadeteria","nvta":"8898","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8899","pago":4,"tipo":"E","monto":65578},{"concepto":"Ventas","nvta":"8900","pago":4,"tipo":"E","monto":71584},{"concepto":"Ventas","nvta":"8901","pago":0,"tipo":"E","monto":36000},{"concepto":"Cadeteria","nvta":"8900","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"8902","pago":4,"tipo":"E","monto":40860},{"concepto":"Cadeteria","nvta":"8889","pago":0,"tipo":"S","monto":3000}],"cierre":{"20000":1,"10000":2,"2000":8,"1000":0,"500":0,"200":0,"100":0}},"2A":{"movimientos":[{"concepto":"Ventas","nvta":"8903","pago":4,"tipo":"E","monto":49300},{"concepto":"Ventas","nvta":"8904","pago":3,"tipo":"E","monto":141900},{"concepto":"Ventas","nvta":"8905","pago":4,"tipo":"E","monto":16200},{"concepto":"Ventas","nvta":"8606","pago":5,"tipo":"E","monto":33000}],"cierre":{"20000":1,"10000":2,"2000":8,"1000":0,"500":0,"200":0,"100":0}},"3F":{"movimientos":[{"concepto":"Ventas","nvta":"8907","pago":4,"tipo":"E","monto":112943},{"concepto":"Ventas","nvta":"8908","pago":4,"tipo":"E","monto":32400},{"concepto":"Ventas","nvta":"8909","pago":4,"tipo":"E","monto":71564},{"concepto":"Ventas","nvta":"8910","pago":4,"tipo":"E","monto":35000},{"concepto":"Cadeteria","nvta":"8909","pago":0,"tipo":"S","monto":6000},{"concepto":"Ventas","nvta":"8908","pago":4,"tipo":"E","monto":3500},{"concepto":"Cadeteria","nvta":"8908","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"8911","pago":5,"tipo":"E","monto":29000},{"concepto":"Ventas","nvta":"8912","pago":3,"tipo":"E","monto":70242},{"concepto":"Cadeteria","nvta":"8912","pago":0,"tipo":"S","monto":6000},{"concepto":"Ventas","nvta":"8913","pago":1,"tipo":"E","monto":141100},{"concepto":"Ventas","nvta":"8914","pago":1,"tipo":"E","monto":210000},{"concepto":"Ventas","nvta":"8920","pago":4,"tipo":"E","monto":25600},{"concepto":"Ventas","nvta":"8921","pago":5,"tipo":"E","monto":8300},{"concepto":"Ventas","nvta":"8923","pago":5,"tipo":"E","monto":36000},{"concepto":"Ventas","nvta":"8922","pago":4,"tipo":"E","monto":59000},{"concepto":"Cadeteria","nvta":"8922","pago":0,"tipo":"S","monto":2000},{"concepto":"Ventas","nvta":"8924","pago":4,"tipo":"E","monto":57780}],"cierre":{"20000":1,"10000":1,"2000":5,"1000":1,"500":0,"200":0,"100":0}},"3A":{"movimientos":[{"concepto":"Ventas","nvta":"8915","pago":4,"tipo":"E","monto":36900},{"concepto":"Ventas","nvta":"8916","pago":4,"tipo":"E","monto":22500},{"concepto":"Ventas","nvta":"8917","pago":4,"tipo":"E","monto":38700},{"concepto":"Ventas","nvta":"8918","pago":0,"tipo":"E","monto":39000},{"concepto":"Ventas","nvta":"8919","pago":4,"tipo":"E","monto":19800}],"cierre":{"20000":1,"10000":5,"2000":5,"1000":0,"500":0,"200":0,"100":0}},"4F":{"movimientos":[{"concepto":"Ventas","nvta":"8925","pago":4,"tipo":"E","monto":173112},{"concepto":"Ventas","nvta":"8926","pago":3,"tipo":"E","monto":82112},{"concepto":"Cadeteria","nvta":"8925","pago":0,"tipo":"S","monto":3000},{"concepto":"Fletes","nvta":"","pago":0,"tipo":"S","monto":33000},{"concepto":"Ventas","nvta":"8927","pago":3,"tipo":"E","monto":105000},{"concepto":"Ventas","nvta":"8928","pago":4,"tipo":"E","monto":91800},{"concepto":"Cadeteria","nvta":"8925","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8929","pago":4,"tipo":"E","monto":36500},{"concepto":"Cadeteria","nvta":"8929","pago":0,"tipo":"S","monto":5000},{"concepto":"Ventas","nvta":"8930","pago":4,"tipo":"E","monto":250175},{"concepto":"Cadeteria","nvta":"8930","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8942","pago":4,"tipo":"E","monto":40000},{"concepto":"Ventas","nvta":"8931","pago":4,"tipo":"E","monto":90881},{"concepto":"Ventas","nvta":"8767","pago":4,"tipo":"E","monto":7500},{"concepto":"Cadeteria","nvta":"8941","pago":0,"tipo":"S","monto":3000}],"cierre":{"20000":1,"10000":0,"2000":3,"1000":2,"500":0,"200":0,"100":0}},"4A":{"movimientos":[{"concepto":"Ventas","nvta":"8933","pago":4,"tipo":"E","monto":54000},{"concepto":"Ventas","nvta":"8934","pago":4,"tipo":"E","monto":55500},{"concepto":"Cadeteria","nvta":"8934","pago":0,"tipo":"S","monto":6000},{"concepto":"Ventas","nvta":"8935","pago":4,"tipo":"E","monto":43200},{"concepto":"Cadeteria","nvta":"8935","pago":0,"tipo":"S","monto":9000}],"cierre":{"20000":0,"10000":1,"2000":1,"1000":1,"500":0,"200":0,"100":0}},"5F":{"movimientos":[{"concepto":"Ventas","nvta":"8937","pago":3,"tipo":"E","monto":110000},{"concepto":"Ventas","nvta":"8938","pago":4,"tipo":"E","monto":91378},{"concepto":"Ventas","nvta":"8940","pago":4,"tipo":"E","monto":65578},{"concepto":"Cadeteria","nvta":"8937","pago":0,"tipo":"S","monto":6000},{"concepto":"Ventas","nvta":"8941","pago":4,"tipo":"E","monto":46260},{"concepto":"Cadeteria","nvta":"8941","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8942","pago":4,"tipo":"E","monto":35355},{"concepto":"Cadeteria","nvta":"8942","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8943","pago":4,"tipo":"E","monto":92300},{"concepto":"Ventas","nvta":"8943","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8944","pago":5,"tipo":"E","monto":241000}],"cierre":{"20000":0,"10000":0,"2000":0,"1000":0,"500":0,"200":0,"100":0}},"6F":{"movimientos":[{"concepto":"Ventas","nvta":"8953","pago":5,"tipo":"E","monto":55000},{"concepto":"Ventas","nvta":"8954","pago":5,"tipo":"E","monto":106700},{"concepto":"Ventas","nvta":"8955","pago":5,"tipo":"E","monto":60000},{"concepto":"Ventas","nvta":"8956","pago":5,"tipo":"E","monto":166700},{"concepto":"Ventas","nvta":"8957","pago":4,"tipo":"E","monto":33000},{"concepto":"Ventas","nvta":"8958","pago":4,"tipo":"E","monto":40500},{"concepto":"Ventas","nvta":"8962","pago":4,"tipo":"E","monto":8000},{"concepto":"Ventas","nvta":"8963","pago":0,"tipo":"E","monto":27000},{"concepto":"Ventas","nvta":"8964","pago":0,"tipo":"E","monto":55000},{"concepto":"Ventas","nvta":"8965","pago":4,"tipo":"E","monto":21900}],"cierre":{"20000":4,"10000":3,"2000":2,"1000":0,"500":0,"200":0,"100":0}},"6A":{"movimientos":[{"concepto":"Ventas","nvta":"em976","pago":1,"tipo":"E","monto":105033}],"cierre":{"20000":2,"10000":0,"2000":0,"1000":0,"500":1,"200":0,"100":0}},"7F":{"movimientos":[{"concepto":"Ventas","nvta":"8945","pago":4,"tipo":"E","monto":55074},{"concepto":"Ventas","nvta":"8946","pago":4,"tipo":"E","monto":36926},{"concepto":"Ventas","nvta":"","pago":4,"tipo":"E","monto":36900},{"concepto":"Ventas","nvta":"8948","pago":5,"tipo":"E","monto":28000},{"concepto":"Ventas","nvta":"8949","pago":4,"tipo":"E","monto":50130},{"concepto":"Ventas","nvta":"8947","pago":4,"tipo":"E","monto":36900},{"concepto":"Ventas","nvta":"8950","pago":0,"tipo":"E","monto":40500},{"concepto":"Ventas","nvta":"8951","pago":4,"tipo":"E","monto":36000},{"concepto":"Ventas","nvta":"8952","pago":5,"tipo":"E","monto":86000}],"cierre":{"20000":2,"10000":0,"2000":0,"1000":0,"500":1,"200":0,"100":0}},"8F":{"movimientos":[{"concepto":"Ventas","nvta":"8966","pago":3,"tipo":"E","monto":149000},{"concepto":"Cadeteria","nvta":"8966","pago":0,"tipo":"S","monto":6000},{"concepto":"Ventas","nvta":"8967","pago":4,"tipo":"E","monto":51172},{"concepto":"Ventas","nvta":"8968","pago":4,"tipo":"E","monto":62137},{"concepto":"Ventas","nvta":"8971","pago":4,"tipo":"E","monto":115700},{"concepto":"Cadeteria","nvta":"8971","pago":0,"tipo":"S","monto":9000},{"concepto":"Ventas","nvta":"8972","pago":3,"tipo":"E","monto":131112},{"concepto":"Ventas","nvta":"8961","pago":4,"tipo":"E","monto":30855},{"concepto":"Cadeteria","nvta":"8955","pago":0,"tipo":"S","monto":6000},{"concepto":"Ventas","nvta":"8973","pago":4,"tipo":"E","monto":68000},{"concepto":"Cadeteria","nvta":"8973","pago":0,"tipo":"S","monto":5000},{"concepto":"Cadeteria","nvta":"8961","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"8974","pago":4,"tipo":"E","monto":41400},{"concepto":"Ventas","nvta":"8975","pago":0,"tipo":"E","monto":95500},{"concepto":"Ventas","nvta":"8976","pago":4,"tipo":"E","monto":87281},{"concepto":"Ventas","nvta":"6977","pago":4,"tipo":"E","monto":192000},{"concepto":"Cadeteria","nvta":"8976","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"8978","pago":4,"tipo":"E","monto":82302},{"concepto":"Cadeteria","nvta":"8978","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"8979","pago":4,"tipo":"E","monto":54900}],"cierre":{"20000":4,"10000":8,"2000":5,"1000":4,"500":0,"200":0,"100":0}},"8A":{"movimientos":[{"concepto":"Ventas","nvta":"8980","pago":4,"tipo":"E","monto":24750},{"concepto":"Ventas","nvta":"8981","pago":4,"tipo":"E","monto":236700},{"concepto":"Ventas","nvta":"8982","pago":4,"tipo":"E","monto":31200},{"concepto":"Cadeteria","nvta":"8982","pago":0,"tipo":"S","monto":5000}],"cierre":{"20000":4,"10000":8,"2000":3,"1000":3,"500":0,"200":0,"100":0}},"9F":{"movimientos":[{"concepto":"Ventas","nvta":"8983","pago":4,"tipo":"E","monto":149851},{"concepto":"Ventas","nvta":"8984","pago":4,"tipo":"E","monto":35788},{"concepto":"Cadeteria","nvta":"8983","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"8985","pago":3,"tipo":"E","monto":75390},{"concepto":"Ventas","nvta":"8986","pago":4,"tipo":"E","monto":23000},{"concepto":"Cadeteria","nvta":"8985","pago":0,"tipo":"S","monto":3500},{"concepto":"Cadeteria","nvta":"8986","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"8987","pago":4,"tipo":"E","monto":17200},{"concepto":"Ventas","nvta":"8988","pago":4,"tipo":"E","monto":138600}],"cierre":{"20000":4,"10000":7,"2000":0,"1000":3,"500":5,"200":10,"100":5}},"9A":{"movimientos":[{"concepto":"Ventas","nvta":"8990","pago":0,"tipo":"E","monto":41000},{"concepto":"Ventas","nvta":"8991","pago":4,"tipo":"E","monto":37620},{"concepto":"Ventas","nvta":"8989","pago":3,"tipo":"E","monto":74455},{"concepto":"Ventas","nvta":"8992","pago":0,"tipo":"E","monto":37600}],"cierre":{"20000":6,"10000":10,"2000":1,"1000":10,"500":5,"200":9,"100":3}},"10F":{"movimientos":[{"concepto":"Alquiler","nvta":"","pago":2,"tipo":"S","monto":1081000},{"concepto":"Ventas","nvta":"8993","pago":4,"tipo":"E","monto":77884},{"concepto":"Cadeteria","nvta":"8993","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"8994","pago":4,"tipo":"E","monto":65362},{"concepto":"Cadeteria","nvta":"8994","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"8996","pago":5,"tipo":"E","monto":26400},{"concepto":"Ventas","nvta":"8997","pago":4,"tipo":"E","monto":127832},{"concepto":"Ventas","nvta":"8999","pago":5,"tipo":"E","monto":84700},{"concepto":"Ventas","nvta":"8998","pago":4,"tipo":"E","monto":103100},{"concepto":"Cadeteria","nvta":"8998","pago":0,"tipo":"S","monto":5000},{"concepto":"Cadeteria","nvta":"8999","pago":0,"tipo":"S","monto":3500}],"cierre":{"20000":6,"10000":9,"2000":3,"1000":2,"500":3,"200":8,"100":3}},"10A":{"movimientos":[{"concepto":"Ventas","nvta":"9000","pago":4,"tipo":"E","monto":54450},{"concepto":"Ventas","nvta":"9001","pago":4,"tipo":"E","monto":24170},{"concepto":"Cadeteria","nvta":"9001","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"9002","pago":5,"tipo":"E","monto":187800},{"concepto":"Ventas","nvta":"9003","pago":4,"tipo":"E","monto":37620},{"concepto":"Ventas","nvta":"9004","pago":4,"tipo":"E","monto":27100},{"concepto":"Ventas","nvta":"9005","pago":4,"tipo":"E","monto":85500}],"cierre":{"20000":6,"10000":9,"2000":2,"1000":0,"500":3,"200":8,"100":3}},"11F":{"movimientos":[{"concepto":"Ventas","nvta":"9006","pago":4,"tipo":"E","monto":144458},{"concepto":"Cadeteria","nvta":"9006","pago":0,"tipo":"S","monto":7000},{"concepto":"Ventas","nvta":"9007","pago":3,"tipo":"E","monto":56600},{"concepto":"Cadeteria","nvta":"9007","pago":0,"tipo":"S","monto":3000},{"concepto":"Ventas","nvta":"9008","pago":0,"tipo":"E","monto":20000},{"concepto":"Ventas","nvta":"8995","pago":4,"tipo":"E","monto":6750},{"concepto":"Libreria","nvta":"","pago":0,"tipo":"S","monto":7500}],"cierre":{"20000":7,"10000":7,"2000":0,"1000":6,"500":4,"200":8,"100":3}},"11A":{"movimientos":[{"concepto":"Ventas","nvta":"9009","pago":4,"tipo":"E","monto":6750},{"concepto":"Ventas","nvta":"9010","pago":4,"tipo":"E","monto":87300},{"concepto":"Ventas","nvta":"9011","pago":4,"tipo":"E","monto":32200},{"concepto":"Ventas","nvta":"9012","pago":4,"tipo":"E","monto":62060},{"concepto":"Ventas","nvta":"9013","pago":4,"tipo":"E","monto":107300},{"concepto":"Cadeteria","nvta":"9012","pago":0,"tipo":"S","monto":2500},{"concepto":"Ventas","nvta":"9014","pago":4,"tipo":"E","monto":11160}],"cierre":{"20000":7,"10000":7,"2000":0,"1000":4,"500":3,"200":8,"100":3}},"12F":{"movimientos":[{"concepto":"Ventas","nvta":"9016","pago":3,"tipo":"E","monto":164700},{"concepto":"Cadeteria","nvta":"9016","pago":0,"tipo":"S","monto":5000},{"concepto":"Ventas","nvta":"9017","pago":0,"tipo":"E","monto":56200},{"concepto":"Cadeteria","nvta":"9017","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"9018","pago":0,"tipo":"E","monto":31200},{"concepto":"Ventas","nvta":"9019","pago":0,"tipo":"E","monto":141400},{"concepto":"Ventas","nvta":"9020","pago":4,"tipo":"E","monto":76140},{"concepto":"Ventas","nvta":"9021","pago":4,"tipo":"E","monto":26100},{"concepto":"Ventas","nvta":"9022","pago":5,"tipo":"E","monto":38100},{"concepto":"Ventas","nvta":"9023","pago":4,"tipo":"E","monto":59450},{"concepto":"Cadeteria","nvta":"9023","pago":0,"tipo":"S","monto":5000},{"concepto":"Ventas","nvta":"9024","pago":5,"tipo":"E","monto":98500},{"concepto":"Ventas","nvta":"9025","pago":4,"tipo":"E","monto":32220}],"cierre":{"20000":17,"10000":9,"2000":0,"1000":1,"500":0,"200":9,"100":5}},"12A":{"movimientos":[{"concepto":"Ventas","nvta":"9026","pago":4,"tipo":"E","monto":19600},{"concepto":"Ventas","nvta":"9027","pago":4,"tipo":"E","monto":40000},{"concepto":"Ventas","nvta":"9028","pago":4,"tipo":"E","monto":136000},{"concepto":"Ventas","nvta":"9029","pago":5,"tipo":"E","monto":54600},{"concepto":"Ventas","nvta":"9030","pago":0,"tipo":"E","monto":7000},{"concepto":"Ventas","nvta":"9015","pago":4,"tipo":"E","monto":239295}],"cierre":{"20000":17,"10000":9,"2000":4,"1000":0,"500":0,"200":9,"100":5}},"13F":{"movimientos":[{"concepto":"Ventas","nvta":"9045","pago":4,"tipo":"E","monto":112230},{"concepto":"Ventas","nvta":"9044","pago":3,"tipo":"E","monto":119655},{"concepto":"Ventas","nvta":"9046","pago":0,"tipo":"E","monto":89550},{"concepto":"Ventas","nvta":"9047","pago":5,"tipo":"E","monto":43000},{"concepto":"Ventas","nvta":"9048","pago":5,"tipo":"E","monto":16800},{"concepto":"Ventas","nvta":"9049","pago":4,"tipo":"E","monto":34290},{"concepto":"Ventas","nvta":"9050","pago":4,"tipo":"E","monto":41580},{"concepto":"Ventas","nvta":"9051","pago":4,"tipo":"E","monto":131580},{"concepto":"Ventas","nvta":"9052","pago":5,"tipo":"E","monto":76300},{"concepto":"Ventas","nvta":"9053","pago":0,"tipo":"E","monto":43600}],"cierre":{"20000":25,"10000":18,"2000":0,"1000":3,"500":0,"200":10,"100":2}},"13A":{"movimientos":[{"concepto":"Ventas","nvta":"9036","pago":0,"tipo":"E","monto":82800},{"concepto":"Ventas","nvta":"9037","pago":4,"tipo":"E","monto":91700},{"concepto":"Ventas","nvta":"9038","pago":0,"tipo":"E","monto":44000},{"concepto":"Ventas","nvta":"9039","pago":4,"tipo":"E","monto":28350},{"concepto":"Cadeteria","nvta":"9039","pago":0,"tipo":"S","monto":4000},{"concepto":"Cadeteria","nvta":"9040","pago":4,"tipo":"E","monto":53550},{"concepto":"Cadeteria","nvta":"9040","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"9041","pago":4,"tipo":"E","monto":67400},{"concepto":"Cadeteria","nvta":"9041","pago":0,"tipo":"S","monto":2000},{"concepto":"Ventas","nvta":"9042","pago":4,"tipo":"E","monto":42620},{"concepto":"Ventas","nvta":"9043","pago":4,"tipo":"E","monto":93200},{"concepto":"Cadeteria","nvta":"9042","pago":0,"tipo":"S","monto":3000},{"concepto":"Cadeteria","nvta":"9043","pago":0,"tipo":"S","monto":4000}],"cierre":{"20000":23,"10000":8,"2000":2,"1000":4,"500":1,"200":10,"100":6}},"14F":{"movimientos":[{"concepto":"Ventas","nvta":"9031","pago":5,"tipo":"E","monto":61700},{"concepto":"Ventas","nvta":"9032","pago":5,"tipo":"E","monto":18000},{"concepto":"Ventas","nvta":"9033","pago":5,"tipo":"E","monto":30000},{"concepto":"Ventas","nvta":"9034","pago":4,"tipo":"E","monto":37620}],"cierre":{"20000":17,"10000":9,"2000":4,"1000":0,"500":0,"200":9,"100":5}},"16F":{"movimientos":[{"concepto":"Ventas","nvta":"9061","pago":4,"tipo":"E","monto":76400},{"concepto":"Ventas","nvta":"9055","pago":3,"tipo":"E","monto":44506},{"concepto":"Ventas","nvta":"9058","pago":4,"tipo":"E","monto":35714},{"concepto":"Ventas","nvta":"9059","pago":3,"tipo":"E","monto":32491},{"concepto":"Cadeteria","nvta":"9055","pago":0,"tipo":"S","monto":7000},{"concepto":"Ventas","nvta":"9062","pago":4,"tipo":"E","monto":63810},{"concepto":"Ventas","nvta":"9060","pago":4,"tipo":"E","monto":154890},{"concepto":"Ventas","nvta":"9063","pago":4,"tipo":"E","monto":26910},{"concepto":"Ventas","nvta":"9064","pago":4,"tipo":"E","monto":45564},{"concepto":"Ventas","nvta":"9064","pago":4,"tipo":"S","monto":28500},{"concepto":"Ventas","nvta":"9064","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"9066","pago":4,"tipo":"E","monto":55620},{"concepto":"Ventas","nvta":"9068","pago":5,"tipo":"E","monto":117000}],"cierre":{"20000":25,"10000":17,"2000":0,"1000":3,"500":0,"200":6,"100":0}},"16A":{"movimientos":[{"concepto":"Ventas","nvta":"9070","pago":0,"tipo":"E","monto":57000},{"concepto":"Cadeteria","nvta":"","pago":0,"tipo":"S","monto":2200},{"concepto":"Libreria","nvta":"","pago":0,"tipo":"S","monto":70000}],"cierre":{"20000":23,"10000":19,"2000":3,"1000":2,"500":0,"200":5,"100":0}},"17F":{"movimientos":[{"concepto":"Ventas","nvta":"9072","pago":4,"tipo":"E","monto":37710},{"concepto":"Ventas","nvta":"9073","pago":1,"tipo":"E","monto":202600}],"cierre":{"20000":23,"10000":19,"2000":3,"1000":2,"500":0,"200":5,"100":0}},"17A":{"movimientos":[{"concepto":"Ventas","nvta":"9074","pago":4,"tipo":"E","monto":31050},{"concepto":"Ventas","nvta":"9075","pago":5,"tipo":"E","monto":63400},{"concepto":"Ventas","nvta":"9076","pago":4,"tipo":"E","monto":15900},{"concepto":"Ventas","nvta":"9077","pago":4,"tipo":"E","monto":33300},{"concepto":"Ventas","nvta":"9078","pago":4,"tipo":"E","monto":133500},{"concepto":"Ventas","nvta":"9079","pago":4,"tipo":"E","monto":6300},{"concepto":"Retiros","nvta":"fede","pago":0,"tipo":"S","monto":10000}],"cierre":{"20000":23,"10000":18,"2000":3,"1000":2,"500":0,"200":5,"100":0}},"18F":{"movimientos":[{"concepto":"Ventas","nvta":"9080","pago":3,"tipo":"E","monto":24631},{"concepto":"Ventas","nvta":"9082","pago":0,"tipo":"E","monto":6400},{"concepto":"Cadeteria","nvta":"9081","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"9083","pago":4,"tipo":"E","monto":54410},{"concepto":"Ventas","nvta":"9084","pago":4,"tipo":"E","monto":39510},{"concepto":"Cadeteria","nvta":"9083","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"9085","pago":0,"tipo":"E","monto":38000}],"cierre":{"20000":23,"10000":21,"2000":8,"1000":1,"500":0,"200":0,"100":0}},"18A":{"movimientos":[{"concepto":"Ventas","nvta":"9086","pago":4,"tipo":"E","monto":45932},{"concepto":"Ventas","nvta":"9087","pago":0,"tipo":"E","monto":37000},{"concepto":"Ventas","nvta":"9088","pago":4,"tipo":"E","monto":14200},{"concepto":"Ventas","nvta":"9089","pago":4,"tipo":"E","monto":378800},{"concepto":"Ventas","nvta":"9090","pago":0,"tipo":"E","monto":54000},{"concepto":"Cadeteria","nvta":"9088","pago":0,"tipo":"S","monto":2000}],"cierre":{"20000":26,"10000":24,"2000":4,"1000":8,"500":0,"200":0,"100":0}},"19F":{"movimientos":[{"concepto":"Ventas","nvta":"9094","pago":3,"tipo":"E","monto":76236},{"concepto":"Ventas","nvta":"9092","pago":4,"tipo":"E","monto":20480},{"concepto":"Cadeteria","nvta":"9092","pago":0,"tipo":"S","monto":2000},{"concepto":"Cadeteria","nvta":"9094","pago":0,"tipo":"S","monto":7000},{"concepto":"Libreria","nvta":"","pago":0,"tipo":"S","monto":8000}],"cierre":{"20000":26,"10000":22,"2000":4,"1000":8,"500":0,"200":0,"100":0}},"19A":{"movimientos":[],"cierre":{"20000":26,"10000":22,"2000":4,"1000":8,"500":0,"200":0,"100":0}},"20F":{"movimientos":[{"concepto":"Ventas","nvta":"9102","pago":5,"tipo":"E","monto":69600},{"concepto":"Ventas","nvta":"9103","pago":5,"tipo":"E","monto":40050},{"concepto":"Ventas","nvta":"9104","pago":5,"tipo":"E","monto":48690},{"concepto":"Ventas","nvta":"9105","pago":0,"tipo":"E","monto":62300}],"cierre":{"20000":30,"10000":26,"2000":1,"1000":3,"500":0,"200":2,"100":0}},"20A":{"movimientos":[{"concepto":"Ventas","nvta":"9101","pago":4,"tipo":"E","monto":185000},{"concepto":"Cadeteria","nvta":"9101","pago":0,"tipo":"S","monto":2000}],"cierre":{"20000":0,"10000":0,"2000":0,"1000":0,"500":0,"200":0,"100":0}},"21F":{"movimientos":[{"concepto":"Ventas","nvta":"9095","pago":4,"tipo":"E","monto":79500},{"concepto":"Ventas","nvta":"9096","pago":0,"tipo":"E","monto":50300},{"concepto":"Ventas","nvta":"9094","pago":3,"tipo":"E","monto":73531},{"concepto":"Ventas","nvta":"9097","pago":5,"tipo":"E","monto":99500},{"concepto":"Ventas","nvta":"9098","pago":4,"tipo":"E","monto":60300},{"concepto":"Ventas","nvta":"9099","pago":3,"tipo":"E","monto":65282}],"cierre":{"20000":27,"10000":26,"2000":1,"1000":3,"500":0,"200":0,"100":0}},"22F":{"movimientos":[{"concepto":"Ventas","nvta":"9106","pago":3,"tipo":"E","monto":73480},{"concepto":"Ventas","nvta":"9107","pago":5,"tipo":"E","monto":83000},{"concepto":"Ventas","nvta":"9108","pago":5,"tipo":"E","monto":63400},{"concepto":"Cadeteria","nvta":"9106","pago":0,"tipo":"S","monto":7000},{"concepto":"Fletes","nvta":"","pago":0,"tipo":"S","monto":49000},{"concepto":"Ventas","nvta":"9109","pago":5,"tipo":"E","monto":47500},{"concepto":"Ventas","nvta":"9110","pago":4,"tipo":"E","monto":109170},{"concepto":"Ventas","nvta":"9111","pago":3,"tipo":"E","monto":121500},{"concepto":"Cadeteria","nvta":"9111","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"9112","pago":3,"tipo":"E","monto":97400},{"concepto":"Ventas","nvta":"9113","pago":3,"tipo":"E","monto":93000},{"concepto":"Cadeteria","nvta":"9113","pago":0,"tipo":"S","monto":3000}],"cierre":{"20000":28,"10000":24,"2000":0,"1000":2,"500":0,"200":0,"100":0}},"22A":{"movimientos":[{"concepto":"Pagos/Prestamos/Bar","nvta":"","pago":0,"tipo":"S","monto":32000},{"concepto":"Ventas","nvta":"9114","pago":0,"tipo":"E","monto":31000},{"concepto":"Ventas","nvta":"9115","pago":4,"tipo":"E","monto":6390}],"cierre":{"20000":29,"10000":21,"2000":3,"1000":5,"500":0,"200":0,"100":0}},"23F":{"movimientos":[{"concepto":"Ventas","nvta":"9116","pago":4,"tipo":"E","monto":63943},{"concepto":"Ventas","nvta":"9117","pago":3,"tipo":"E","monto":63450},{"concepto":"Ventas","nvta":"9118","pago":4,"tipo":"E","monto":82671},{"concepto":"Ventas","nvta":"9119","pago":4,"tipo":"E","monto":107090},{"concepto":"Ventas","nvta":"9120","pago":4,"tipo":"E","monto":138160},{"concepto":"Cadeteria","nvta":"9115","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"9121","pago":4,"tipo":"E","monto":69570},{"concepto":"Ventas","nvta":"9122","pago":3,"tipo":"E","monto":32000},{"concepto":"Cadeteria","nvta":"9122","pago":0,"tipo":"S","monto":2000},{"concepto":"Ventas","nvta":"9123","pago":4,"tipo":"E","monto":82890},{"concepto":"Ventas","nvta":"9125","pago":0,"tipo":"E","monto":43700},{"concepto":"Ventas","nvta":"9126","pago":5,"tipo":"E","monto":9000},{"concepto":"Pagos/Prestamos/Bar","nvta":"","pago":0,"tipo":"S","monto":28000},{"concepto":"Ventas","nvta":"9100","pago":4,"tipo":"E","monto":64469}],"cierre":{"20000":31,"10000":19,"2000":0,"1000":1,"500":0,"200":0,"100":0}},"23A":{"movimientos":[{"concepto":"Ventas","nvta":"9129","pago":4,"tipo":"E","monto":166500},{"concepto":"Ventas","nvta":"9128","pago":4,"tipo":"E","monto":69050},{"concepto":"Ventas","nvta":"9130","pago":3,"tipo":"E","monto":63400},{"concepto":"Ventas","nvta":"9131","pago":4,"tipo":"E","monto":58000},{"concepto":"Ventas","nvta":"9132","pago":4,"tipo":"E","monto":37620},{"concepto":"Ventas","nvta":"9133","pago":4,"tipo":"E","monto":55600}],"cierre":{"20000":31,"10000":19,"2000":0,"1000":1,"500":0,"200":0,"100":0}},"24F":{"movimientos":[{"concepto":"Ventas","nvta":"9136","pago":3,"tipo":"E","monto":195000},{"concepto":"Ventas","nvta":"9134","pago":4,"tipo":"E","monto":43250},{"concepto":"Cadeteria","nvta":"9134","pago":0,"tipo":"S","monto":7000},{"concepto":"Ventas","nvta":"9135","pago":4,"tipo":"E","monto":15480},{"concepto":"Ventas","nvta":"9137","pago":5,"tipo":"E","monto":70500},{"concepto":"Cadeteria","nvta":"9136","pago":0,"tipo":"S","monto":10000},{"concepto":"Cadeteria","nvta":"9136","pago":4,"tipo":"E","monto":6000},{"concepto":"Ventas","nvta":"9138","pago":4,"tipo":"E","monto":64668},{"concepto":"Cadeteria","nvta":"9138","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"9139","pago":5,"tipo":"E","monto":98000},{"concepto":"Ventas","nvta":"9140","pago":5,"tipo":"E","monto":51200},{"concepto":"Ventas","nvta":"9141","pago":4,"tipo":"E","monto":45680},{"concepto":"Cadeteria","nvta":"9141","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"9142","pago":5,"tipo":"E","monto":44500}],"cierre":{"20000":31,"10000":16,"2000":1,"1000":4,"500":1,"200":0,"100":0}},"24A":{"movimientos":[{"concepto":"Ventas","nvta":"9143","pago":4,"tipo":"E","monto":14220},{"concepto":"Cadeteria","nvta":"9134","pago":0,"tipo":"S","monto":5000},{"concepto":"Ventas","nvta":"9144","pago":0,"tipo":"E","monto":4500},{"concepto":"Ventas","nvta":"9145","pago":0,"tipo":"E","monto":21500},{"concepto":"Retiros","nvta":"Andres","pago":0,"tipo":"S","monto":20000},{"concepto":"Ventas","nvta":"9146","pago":0,"tipo":"E","monto":49000},{"concepto":"Ventas","nvta":"9147","pago":4,"tipo":"E","monto":60000}],"cierre":{"20000":33,"10000":17,"2000":0,"1000":5,"500":3,"200":0,"100":0}},"25F":{"movimientos":[{"concepto":"Ventas","nvta":"9149","pago":3,"tipo":"E","monto":81300},{"concepto":"Ventas","nvta":"9150","pago":0,"tipo":"E","monto":49700},{"concepto":"Ventas","nvta":"9151","pago":0,"tipo":"E","monto":17300},{"concepto":"Ventas","nvta":"9152","pago":4,"tipo":"E","monto":57060}],"cierre":{"20000":36,"10000":18,"2000":0,"1000":2,"500":3,"200":0,"100":0}},"25A":{"movimientos":[{"concepto":"Ventas","nvta":"9154","pago":4,"tipo":"E","monto":42620},{"concepto":"Ventas","nvta":"9155","pago":4,"tipo":"E","monto":40590},{"concepto":"Ventas","nvta":"9156","pago":5,"tipo":"E","monto":139500},{"concepto":"Ventas","nvta":"9157","pago":4,"tipo":"E","monto":18000},{"concepto":"Cadeteria","nvta":"9154","pago":0,"tipo":"S","monto":5000},{"concepto":"Ventas","nvta":"9158","pago":0,"tipo":"E","monto":37000}],"cierre":{"20000":40,"10000":17,"2000":1,"1000":2,"500":3,"200":0,"100":0}},"26F":{"movimientos":[{"concepto":"Ventas","nvta":"9153","pago":3,"tipo":"E","monto":75390},{"concepto":"Ventas","nvta":"9160","pago":4,"tipo":"E","monto":35700},{"concepto":"Ventas","nvta":"9161","pago":0,"tipo":"E","monto":53200},{"concepto":"Cadeteria","nvta":"9153","pago":0,"tipo":"S","monto":3500},{"concepto":"Ventas","nvta":"9162","pago":4,"tipo":"E","monto":34290},{"concepto":"Mantenimiento","nvta":"adaptadores","pago":0,"tipo":"S","monto":5000},{"concepto":"Ventas","nvta":"9163","pago":4,"tipo":"E","monto":17200},{"concepto":"Ventas","nvta":"9164","pago":4,"tipo":"E","monto":81090},{"concepto":"Ventas","nvta":"9165","pago":5,"tipo":"E","monto":105700},{"concepto":"Ventas","nvta":"9167","pago":0,"tipo":"E","monto":47340},{"concepto":"Ventas","nvta":"9166","pago":0,"tipo":"E","monto":68400},{"concepto":"Cadeteria","nvta":"9166","pago":0,"tipo":"S","monto":5000}],"cierre":{"20000":42,"10000":21,"2000":8,"1000":5,"500":3,"200":0,"100":0}},"26A":{"movimientos":[{"concepto":"Ventas","nvta":"9168","pago":4,"tipo":"E","monto":50000},{"concepto":"Ventas","nvta":"9169","pago":5,"tipo":"E","monto":222000},{"concepto":"Ventas","nvta":"9170","pago":5,"tipo":"E","monto":29900},{"concepto":"Ventas","nvta":"9171","pago":0,"tipo":"E","monto":7000}],"cierre":{"20000":42,"10000":21,"2000":8,"1000":9,"500":5,"200":0,"100":0}},"27F":{"movimientos":[{"concepto":"Ventas","nvta":"9180","pago":4,"tipo":"E","monto":73350},{"concepto":"Ventas","nvta":"9181","pago":0,"tipo":"E","monto":38100},{"concepto":"Ventas","nvta":"9182","pago":4,"tipo":"E","monto":25200},{"concepto":"Ventas","nvta":"9183","pago":5,"tipo":"E","monto":60300},{"concepto":"Ventas","nvta":"9184","pago":0,"tipo":"E","monto":14000}],"cierre":{"20000":43,"10000":27,"2000":2,"1000":11,"500":2,"200":0,"100":0}},"27A":{"movimientos":[{"concepto":"Ventas","nvta":"9176","pago":4,"tipo":"E","monto":121200},{"concepto":"Ventas","nvta":"9177","pago":4,"tipo":"E","monto":33350},{"concepto":"Ventas","nvta":"9179","pago":5,"tipo":"E","monto":55700},{"concepto":"Ventas","nvta":"9178","pago":4,"tipo":"E","monto":15480},{"concepto":"Cadeteria","nvta":"9177","pago":0,"tipo":"S","monto":5000}],"cierre":{"20000":42,"10000":23,"2000":6,"1000":11,"500":2,"200":0,"100":0}},"28F":{"movimientos":[{"concepto":"Ventas","nvta":"9172","pago":0,"tipo":"E","monto":21800},{"concepto":"Ventas","nvta":"9173","pago":4,"tipo":"E","monto":48240},{"concepto":"Ventas","nvta":"9174","pago":3,"tipo":"E","monto":209380},{"concepto":"Ventas","nvta":"9175","pago":4,"tipo":"E","monto":74620}],"cierre":{"20000":42,"10000":23,"2000":8,"1000":12,"500":2,"200":0,"100":0}},"29F":{"movimientos":[{"concepto":"Ventas","nvta":"9185","pago":3,"tipo":"E","monto":70809},{"concepto":"Ventas","nvta":"9186","pago":4,"tipo":"E","monto":78946},{"concepto":"Ventas","nvta":"9188","pago":3,"tipo":"E","monto":50200},{"concepto":"Cadeteria","nvta":"9188","pago":0,"tipo":"S","monto":3500},{"concepto":"Cadeteria","nvta":"9185","pago":0,"tipo":"S","monto":4000},{"concepto":"Ventas","nvta":"9189","pago":4,"tipo":"E","monto":27200},{"concepto":"Ventas","nvta":"9190","pago":4,"tipo":"E","monto":33500},{"concepto":"Ventas","nvta":"9191","pago":4,"tipo":"E","monto":20100},{"concepto":"Fletes","nvta":"","pago":0,"tipo":"S","monto":49000}],"cierre":{"20000":41,"10000":26,"2000":0,"1000":9,"500":1,"200":0,"100":0}},"29A":{"movimientos":[{"concepto":"Ventas","nvta":"9193","pago":0,"tipo":"E","monto":63000},{"concepto":"Cadeteria","nvta":"9193","pago":0,"tipo":"S","monto":5000}],"cierre":{"20000":44,"10000":26,"2000":0,"1000":7,"500":1,"200":0,"100":3}},"30F":{"movimientos":[{"concepto":"Pagos/Prestamos/Bar","nvta":"","pago":0,"tipo":"S","monto":647815}],"cierre":{"20000":24,"10000":2,"2000":0,"1000":7,"500":1,"200":0,"100":3}},"30A":{"movimientos":[{"concepto":"Ventas","nvta":"9194","pago":4,"tipo":"E","monto":127015},{"concepto":"Ventas","nvta":"9195","pago":5,"tipo":"E","monto":240400},{"concepto":"Ventas","nvta":"9196","pago":3,"tipo":"E","monto":140507}],"cierre":{"20000":24,"10000":2,"2000":0,"1000":7,"500":1,"200":0,"100":3}}}};
+const CLASIF_OPTS=[['COGS','Mercadería'],['LABOR','Laboral'],['FIJO','Fijo'],['VAR','Variable'],['EXCL','Excluir']];
+function defaultClasif(){const m={};CATS.forEach(g=>g.items.forEach(c=>{if(g.group==='Compras')m[c]='COGS';else if(c==='Sueldos'||c==='Aguinaldos')m[c]='LABOR';else if(g.group==='Gastos fijos')m[c]='FIJO';else m[c]='VAR';}));m['Pagos/Prestamos/Bar']='EXCL';return m;}
+function migrateSessKeys(p){
+  if(!p||!p.sessions)return p;
+  const map={F:'M',A:'T'};const ns={};
+  Object.keys(p.sessions).forEach(k=>{
+    const suf=k.slice(-1), d=k.slice(0,-1);
+    const nk=(map[suf]?d+map[suf]:k);
+    ns[nk]=p.sessions[k];
+  });
+  p.sessions=ns;return p;
+}
+function loadSeed(){return migrateSessKeys(JSON.parse(JSON.stringify(SEED_JUNIO)));}
+
+/* ---------- Estado ---------- */
+const LS_KEY='caja_sexshop_v2';
+// ====== Conexión a la nube (Google Apps Script + Planilla) ======
+// La URL y la clave NO se guardan en el archivo (repo público): se configuran
+// por dispositivo desde Ajustes > Conexión a la nube y quedan en este navegador.
+let CLOUD = { url:'', token:'' };
+const CLOUD_KEY='caja_sexshop_cloud';
+function loadCloudCfg(){try{const c=JSON.parse(localStorage.getItem(CLOUD_KEY));if(c){CLOUD.url=c.url||'';CLOUD.token=c.token||'';}}catch(e){}}
+function saveCloudCfg(url,token){CLOUD.url=(url||'').trim();CLOUD.token=(token||'').trim();localStorage.setItem(CLOUD_KEY,JSON.stringify(CLOUD));}
+let store, state; // store = {activo, periodos:{}}; state = periodo activo
+let cur = {day:1, sess:'M'};
+let mTipo='E';
+
+function emptyPeriodo(mes,anio){
+  return {mes,anio,apertura:blankDenoms(),aperturaMonto:0,sessions:{},admin:[]};
+}
+function blankDenoms(){const o={};DENOMS.forEach(d=>o[d]=0);return o;}
+function aperturaTotal(){const d=denomTotal(state.apertura||{});return d>0?d:(Number(state.aperturaMonto)||0);}
+function sessKey(day,sess){return day+sess;}
+function orderedKeys(){const a=[];for(let d=1;d<=31;d++){a.push(d+'M');a.push(d+'T');a.push(d+'N');}return a;}
+function getSession(key){
+  if(!state.sessions[key]) state.sessions[key]={movimientos:[],cierre:blankDenoms()};
+  const s=state.sessions[key];
+  if(!s.cierre) s.cierre=blankDenoms();
+  if(!s.movimientos) s.movimientos=[];
+  return s;
+}
+
+/* ---------- Persistencia ---------- */
+function load(){
+  try{store=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){store=null;}
+  if(!store||!store.periodos){
+    store={activo:'2026-06',periodos:{'2026-06':loadSeed()}};
+  }
+  normalizeStore(true);
+}
+function normalizeStore(allowSeedRecovery){
+  if(!store.config)store.config={};
+  if(!store.config.cats)store.config.cats=DEFAULT_CATS.map(g=>({group:g.group,items:g.items.slice()}));
+  if(!store.config.payments)store.config.payments=DEFAULT_PAYMENTS.slice();
+  if(!store.config.canales)store.config.canales=DEFAULT_CANALES.slice();
+  refreshCats();
+  store.config.clasif=Object.assign(defaultClasif(),store.config.clasif||{});
+  if(!store.periodos)store.periodos={'2026-06':loadSeed()};
+  if(!store.periodos[store.activo]){store.activo=Object.keys(store.periodos)[0];}
+  if(allowSeedRecovery){
+    const anyData=Object.values(store.periodos).some(p=>Object.values(p.sessions||{}).some(s=>(s.movimientos||[]).length));
+    if(!anyData){store.periodos['2026-06']=loadSeed();store.activo='2026-06';}
+  }
+  Object.values(store.periodos).forEach(p=>{if(!p.admin)p.admin=[];if(p.aperturaMonto==null)p.aperturaMonto=denomTotal(p.apertura||{});migrateSessKeys(p);});
+  ensureUsers();
+  state=store.periodos[store.activo];
+}
+const ALL_TABS=['diario','admin','mensual','stats','ajustes'];
+const OP_TABS=['diario','admin','mensual','stats'];
+const TAB_NAMES={diario:'Diario',admin:'Administración',mensual:'Mensual',stats:'Estadísticas',ajustes:'Ajustes'};
+function hashPass(s){let h=5381;s=String(s);for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return h.toString(36);}
+function ensureUsers(){
+  if(!store.users)store.users={};
+  if(!store.users.admin)store.users.admin={role:'admin',pass:hashPass('220708'),tabs:ALL_TABS.slice()};
+  store.users.admin.role='admin';store.users.admin.tabs=ALL_TABS.slice();
+}
+function save(localOnly){localStorage.setItem(LS_KEY,JSON.stringify(store));if(!localOnly&&CLOUD.url)cloudPush();}
+
+/* ---------- Sincronización con la nube ---------- */
+let cloudPushTimer=null, cloudReady=false;
+function cloudEnabled(){return !!CLOUD.url;}
+function setCloudStatus(s){
+  const el=document.getElementById('cloudStatus');if(!el)return;
+  const map={off:['⚪ Local','sin nube'],sync:['☁ Sincronizando…','guardando'],cloud:['☁ Nube','sincronizado'],offline:['⚠ Sin conexión','reintenta al tocar']};
+  const v=map[s]||map.off;el.textContent=v[0];el.title=v[1];el.dataset.st=s;
+}
+async function cloudPull(){
+  if(!cloudEnabled()){setCloudStatus('off');return;}
+  setCloudStatus('sync');
+  try{
+    const r=await fetch(CLOUD.url+'?token='+encodeURIComponent(CLOUD.token),{method:'GET'});
+    const j=await r.json();
+    if(!j||!j.ok)throw new Error('auth');
+    if(j.data){
+      const remote=JSON.parse(j.data);
+      if(remote&&remote.periodos){
+        store=remote;normalizeStore(false);save(true); // adopta remoto, cachea local sin re-subir
+        if(currentUser){if(store.users[currentUser.name]){setCurrent(currentUser.name);applyPermissions();renderAll();}else{logout();}}
+      }
+    }else{
+      cloudPush(true); // remoto vacío: subo lo local por primera vez
+    }
+    cloudReady=true;setCloudStatus('cloud');
+  }catch(e){setCloudStatus('offline');}
+}
+function cloudPush(now){
+  if(!cloudEnabled())return;
+  clearTimeout(cloudPushTimer);
+  const doPush=async()=>{
+    setCloudStatus('sync');
+    try{
+      store.updatedAt=Date.now();localStorage.setItem(LS_KEY,JSON.stringify(store));
+      await fetch(CLOUD.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:CLOUD.token,data:JSON.stringify(store)})});
+      setCloudStatus('cloud');
+    }catch(e){setCloudStatus('offline');}
+  };
+  if(now)doPush();else cloudPushTimer=setTimeout(doPush,900);
+}
+
+/* ---------- Utils ---------- */
+const AR = new Intl.NumberFormat('es-AR',{maximumFractionDigits:0});
+function money(n){const v=Math.round(n||0);const s=AR.format(Math.abs(v));return (v<0?'-$':'$')+s;}
+function pct(n){return (n*100).toFixed(1).replace('.',',')+'%';}
+function parseNum(s){if(typeof s==='number')return s;return Number(String(s).replace(/[^\d-]/g,''))||0;}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1800);}
+
+/* ---------- Cálculos por turno ---------- */
+function denomTotal(d){return DENOMS.reduce((a,x)=>a+x*(d[x]||0),0);}
+function cajaInicialTotal(key){
+  const keys=orderedKeys();const idx=keys.indexOf(key);
+  if(idx<=0) return aperturaTotal();
+  for(let i=idx-1;i>=0;i--){
+    const ps=state.sessions[keys[i]];
+    if(ps&&ps.cierre&&denomTotal(ps.cierre)>0) return denomTotal(ps.cierre);
+  }
+  return aperturaTotal(); // fallback: ninguna turno previa fue arqueada
+}
+function calcSession(key){
+  const s=getSession(key);
+  const movs=s.movimientos;
+  const ventas=movs.filter(m=>m.tipo==='E'&&INGRESO_CONCEPTS.includes(m.concepto)).reduce((a,m)=>a+m.monto,0);
+  const otrosIng=movs.filter(m=>m.tipo==='E'&&!INGRESO_CONCEPTS.includes(m.concepto)).reduce((a,m)=>a+m.monto,0);
+  const egresos=movs.filter(m=>m.tipo==='S').reduce((a,m)=>a+m.monto,0);
+  const cajaIni=cajaInicialTotal(key);
+  // por cuenta
+  const cuenta=PAYMENTS.map((p,i)=>{
+    const ing=movs.filter(m=>m.tipo==='E'&&m.pago===i).reduce((a,m)=>a+m.monto,0);
+    const egr=movs.filter(m=>m.tipo==='S'&&m.pago===i).reduce((a,m)=>a+m.monto,0);
+    let saldo=ing-egr; if(i===0) saldo+=cajaIni;
+    return {p,ing,egr,saldo};
+  });
+  // efectivo arqueo
+  const ingEfvo=cuenta[0].ing, egrEfvo=cuenta[0].egr;
+  const esperado=cajaIni+ingEfvo-egrEfvo;
+  const contado=denomTotal(s.cierre);
+  const arqueado=contado>0||DENOMS.some(d=>s.cierre[d]>0);
+  const dif=arqueado?(contado-esperado):0;
+  // categorias
+  const cats={};
+  CAT_ITEMS.forEach(c=>{
+    const sale=movs.filter(m=>m.concepto===c&&m.tipo==='S').reduce((a,m)=>a+m.monto,0);
+    const entra=movs.filter(m=>m.concepto===c&&m.tipo==='E').reduce((a,m)=>a+m.monto,0);
+    cats[c]=sale-entra;
+  });
+  const saldoCaja=cajaIni+ventas+otrosIng-egresos;
+  return {ventas,otrosIng,egresos,cajaIni,cuenta,ingEfvo,egrEfvo,esperado,contado,arqueado,dif,cats,saldoCaja};
+}
+function calcMonth(){
+  const keys=orderedKeys();
+  let ventas=0,egresos=0,dif=0;
+  const cuenta=PAYMENTS.map(p=>({p,ing:0,egr:0,saldo:0}));
+  const cats={};CAT_ITEMS.forEach(c=>cats[c]=0);
+  const daily=[];
+  let saldoAcum=0;
+  keys.forEach(k=>{
+    const s=state.sessions[k];
+    if(!s||(!s.movimientos.length&&denomTotal(s.cierre||{})===0)) return;
+    const c=calcSession(k);
+    ventas+=c.ventas; egresos+=c.egresos; dif+=c.dif;
+    c.cuenta.forEach((cu,i)=>{cuenta[i].ing+=cu.ing;cuenta[i].egr+=cu.egr;});
+    CAT_ITEMS.forEach(cat=>cats[cat]+=c.cats[cat]);
+    saldoAcum+=(c.ventas+c.otrosIng-c.egresos);
+    daily.push({key:k,ventas:c.ventas,egresos:c.egresos,saldo:saldoAcum,dif:c.arqueado?c.dif:null});
+  });
+  cuenta.forEach((cu,i)=>{cu.saldo=cu.ing-cu.egr; if(i===0)cu.saldo+=aperturaTotal();});
+  const saldoCaja=cuenta.reduce((a,c)=>a+c.saldo,0);
+  // Integrar administración en el rollup de categorías y egresos
+  const ad=calcAdmin();
+  CAT_ITEMS.forEach(cat=>cats[cat]+=ad.cats[cat]);
+  const cajaEgresos=egresos;
+  const egresosTot=cajaEgresos+ad.egresos;
+  return {ventas,egresos:egresosTot,cajaEgresos,adminEgresos:ad.egresos,dif,cuenta,cats,daily,saldoCaja};
+}
+
+/* ---------- Render: header/periodos ---------- */
+function renderPeriodos(){
+  const sel=document.getElementById('periodoSel');
+  sel.innerHTML='';
+  Object.keys(store.periodos).sort().forEach(k=>{
+    const p=store.periodos[k];
+    const o=document.createElement('option');o.value=k;o.textContent=`${p.mes} ${p.anio}`;
+    if(k===store.activo)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+/* ---------- Render: diario ---------- */
+function fillSelectors(){
+  const day=document.getElementById('daySel');
+  if(day.options.length!==31){day.innerHTML='';for(let d=1;d<=31;d++){const o=document.createElement('option');o.value=d;o.textContent='Día '+d;day.appendChild(o);}}
+  day.value=cur.day;
+  document.querySelectorAll('#sessSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===cur.sess));
+  // concepto select
+  const mc=document.getElementById('mConcepto');
+  if(!mc.options.length){
+    let html='<optgroup label="Ingreso">';
+    INGRESO_CONCEPTS.forEach(c=>html+=`<option value="${c}">${c}</option>`);
+    html+='</optgroup><option value="Retiros">Retiros</option>';
+    CATS.forEach(g=>{html+=`<optgroup label="${g.group}">`;g.items.forEach(c=>html+=`<option value="${c}">${c}</option>`);html+='</optgroup>';});
+    mc.innerHTML=html;
+  }
+  const mp=document.getElementById('mPago');
+  if(!mp.options.length){mp.innerHTML=PAYMENTS.map((p,i)=>`<option value="${i}">${p}</option>`).join('');}
+  const mca=document.getElementById('mCanal');
+  if(!mca.options.length){mca.innerHTML='<option value="">—</option>'+CANALES.map(c=>`<option value="${c}">${c}</option>`).join('');}
+}
+function autoTipo(){
+  const c=document.getElementById('mConcepto').value;
+  mTipo=INGRESO_CONCEPTS.includes(c)?'E':'S';
+  syncTipoUI();
+}
+function syncTipoUI(){
+  document.querySelectorAll('#mTipo button').forEach(b=>{
+    const on=b.dataset.t===mTipo;
+    b.classList.toggle('onE',on&&mTipo==='E');
+    b.classList.toggle('onS',on&&mTipo==='S');
+  });
+}
+function renderDiario(){
+  fillSelectors();
+  const key=sessKey(cur.day,cur.sess);
+  const s=getSession(key);
+  const c=calcSession(key);
+  document.getElementById('cajaIniLbl').textContent=money(c.cajaIni);
+  document.getElementById('kVentas').textContent=money(c.ventas);
+  document.getElementById('kEgresos').textContent=money(c.egresos);
+  document.getElementById('kSaldo').textContent=money(c.saldoCaja);
+  const kd=document.getElementById('kDif');
+  kd.textContent=c.arqueado?money(c.dif):'—';
+  kd.className='val '+(!c.arqueado?'':(c.dif===0?'pos':(c.dif<0?'neg':'warnc')));
+  document.getElementById('kDifSub').textContent=c.arqueado?'contado − esperado':'sin arqueo';
+
+  // movimientos
+  const tb=document.getElementById('movBody');
+  if(!s.movimientos.length){tb.innerHTML='<tr><td colspan="8" class="empty">Sin movimientos cargados</td></tr>';}
+  else{
+    let run=0;
+    tb.innerHTML=s.movimientos.map((m,i)=>{
+      run+=(m.tipo==='E'?m.monto:-m.monto);
+      return `<tr>
+        <td>${m.concepto}${m.tipo==='E'&&!INGRESO_CONCEPTS.includes(m.concepto)?' <span class="chip">ajuste+</span>':''}</td>
+        <td class="mut">${m.canal?`<span class="chip">${m.canal}</span>`:'—'}</td>
+        <td class="mut">${m.nvta||'—'}</td>
+        <td><span class="chip">${PAYMENTS[m.pago]}</span></td>
+        <td class="num pos">${m.tipo==='E'?money(m.monto):''}</td>
+        <td class="num neg">${m.tipo==='S'?money(m.monto):''}</td>
+        <td class="num">${money(run)}</td>
+        <td class="num"><button class="del" data-i="${i}">×</button></td>
+      </tr>`;
+    }).join('');
+  }
+  // por cuenta
+  document.getElementById('cuentaBody').innerHTML=c.cuenta.map(cu=>`
+    <tr><td>${cu.p}</td><td class="num pos">${cu.ing?money(cu.ing):'—'}</td>
+    <td class="num neg">${cu.egr?money(cu.egr):'—'}</td><td class="num">${money(cu.saldo)}</td></tr>`).join('');
+
+  // arqueo denoms
+  const di=document.getElementById('denomInputs');
+  di.innerHTML=DENOMS.map(d=>`
+    <span class="dv">$${AR.format(d)}</span>
+    <input type="text" inputmode="numeric" data-d="${d}" value="${s.cierre[d]||''}" placeholder="0">
+    <span class="tot" id="dt_${d}">${money(d*(s.cierre[d]||0))}</span>`).join('');
+  document.getElementById('contadoTot').textContent=money(c.contado);
+  document.getElementById('arqIni').textContent=money(c.cajaIni);
+  document.getElementById('arqVtas').textContent=money(c.ingEfvo);
+  document.getElementById('arqEgr').textContent=money(c.egrEfvo);
+  document.getElementById('arqEsp').textContent=money(c.esperado);
+  const ad=document.getElementById('arqDif');
+  ad.textContent=c.arqueado?money(c.dif):'—';
+  ad.className='dv '+(!c.arqueado?'mut':(c.dif===0?'pos':(c.dif<0?'neg':'warnc')));
+
+  // categorias sesion
+  renderCatBlock('catSession',c.cats,c.ventas,false);
+}
+
+/* ---------- Render: categorias ---------- */
+function renderCatBlock(elId,cats,ventas,monthly){
+  const el=document.getElementById(elId);
+  const max=Math.max(1,...CAT_ITEMS.map(c=>Math.abs(cats[c])));
+  let html='';let any=false;
+  CATS.forEach(g=>{
+    const rows=g.items.filter(c=>Math.abs(cats[c])>0.5);
+    if(!rows.length)return;any=true;
+    html+=`<div class="catgrp"><div class="gh">${g.group}</div>`;
+    rows.forEach(c=>{
+      const v=cats[c];const p=ventas>0?Math.abs(v)/ventas:0;
+      html+=`<div class="catrow"><span>${c}</span>
+        <span class="amt">${money(Math.abs(v))}</span>
+        <span class="pct">${ventas>0?pct(p):'—'}</span>
+        <div class="bar" style="grid-column:1/-1"><i style="width:${(Math.abs(v)/max*100).toFixed(1)}%"></i></div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  el.innerHTML=any?html:'<div class="empty">Sin gastos cargados</div>';
+}
+
+/* ---------- Render: mensual ---------- */
+function renderMensual(){
+  const m=calcMonth();
+  document.getElementById('mkVentas').textContent=money(m.ventas);
+  document.getElementById('mkEgresos').textContent=money(m.egresos);
+  document.getElementById('mkEgrPct').textContent=`caja ${money(m.cajaEgresos)} · admin ${money(m.adminEgresos)}`;
+  document.getElementById('mkSaldo').textContent=money(m.saldoCaja);
+  const md=document.getElementById('mkDif');
+  md.textContent=money(m.dif);md.className='val '+(m.dif===0?'pos':(m.dif<0?'neg':'warnc'));
+  document.getElementById('mCuentaBody').innerHTML=m.cuenta.map(cu=>`
+    <tr><td>${cu.p}</td><td class="num pos">${cu.ing?money(cu.ing):'—'}</td>
+    <td class="num neg">${cu.egr?money(cu.egr):'—'}</td><td class="num">${money(cu.saldo)}</td></tr>`).join('');
+  renderCatBlock('mCat',m.cats,m.ventas,true);
+  const dd=document.getElementById('mDaily');
+  if(!m.daily.length){dd.innerHTML='<tr><td colspan="5" class="empty">Sin turnos con datos</td></tr>';}
+  else dd.innerHTML=m.daily.map(r=>`
+    <tr><td>${r.key}</td><td class="num">${money(r.ventas)}</td><td class="num neg">${r.egresos?money(r.egresos):'—'}</td>
+    <td class="num">${money(r.saldo)}</td>
+    <td class="num ${r.dif===null?'mut':(r.dif===0?'pos':(r.dif<0?'neg':'warnc'))}">${r.dif===null?'—':money(r.dif)}</td></tr>`).join('');
+}
+
+/* ---------- Render: ajustes ---------- */
+function renderAjustes(){
+  document.getElementById('aperturaMontoInput').value=state.aperturaMonto?AR.format(state.aperturaMonto):'';
+  const ai=document.getElementById('aperturaInputs');
+  ai.innerHTML=DENOMS.map(d=>`
+    <span class="dv">$${AR.format(d)}</span>
+    <input type="text" inputmode="numeric" data-ad="${d}" value="${state.apertura[d]||''}" placeholder="0">
+    <span class="tot" id="at_${d}">${money(d*(state.apertura[d]||0))}</span>`).join('');
+  document.getElementById('aperturaTot').textContent=money(denomTotal(state.apertura));
+  document.getElementById('cloudUrl').value=CLOUD.url||'';
+  document.getElementById('cloudToken').value=CLOUD.token||'';
+  document.getElementById('cloudMsg').textContent=CLOUD.url?(cloudReady?'conectado ✓':'configurado (tocá el indicador para sincronizar)'):'sin conexión — modo local';
+  renderCatConfig();
+}
+/* ---------- Editor de categorías y formas de pago ---------- */
+function bucketFor(group,item){if(group==='Compras')return 'COGS';if(item==='Sueldos'||item==='Aguinaldos')return 'LABOR';if(group==='Gastos fijos')return 'FIJO';return 'VAR';}
+function catInUse(item){return Object.values(store.periodos).some(p=>Object.values(p.sessions||{}).some(s=>(s.movimientos||[]).some(m=>m.concepto===item))||(p.admin||[]).some(m=>m.concepto===item));}
+function paymentInUse(idx){return Object.values(store.periodos).some(p=>Object.values(p.sessions||{}).some(s=>(s.movimientos||[]).some(m=>m.pago===idx))||(p.admin||[]).some(m=>m.pago===idx));}
+function rebuildDropdowns(){['mConcepto','mCanal','mPago','aConcepto','aPago'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});}
+function applyCatChange(){refreshCats();save();rebuildDropdowns();renderAll();}
+function renderCatConfig(){
+  const enc=encodeURIComponent;
+  document.getElementById('payEditor').innerHTML='<div class="editchips">'+PAYMENTS.map((p,i)=>`<span class="echip">${p}${i===0?'':`<span class="x" data-payidx="${i}" title="eliminar">×</span>`}</span>`).join('')+'</div>';
+  document.getElementById('canalEditor').innerHTML='<div class="editchips">'+CANALES.map(c=>`<span class="echip">${c}<span class="x" data-canal="${enc(c)}" title="eliminar">×</span></span>`).join('')+'</div>';
+  document.getElementById('catEditor').innerHTML=store.config.cats.map(g=>`
+    <div class="catEditGrp"><div class="gh">${g.group}</div>
+    <div class="editchips">${g.items.map(it=>`<span class="echip">${it}<span class="x" data-cat="${enc(it)}" data-group="${enc(g.group)}" title="eliminar">×</span></span>`).join('')}
+    <span class="addinline"><input type="text" placeholder="nuevo ítem" data-group="${enc(g.group)}"><button class="addcat" data-group="${enc(g.group)}">+</button></span></div></div>`).join('');
+}
+function addCanal(name){name=(name||'').trim();if(!name)return;if(CANALES.some(c=>c.toLowerCase()===name.toLowerCase())){toast('Ese canal ya existe');return;}store.config.canales.push(name);applyCatChange();toast('Canal agregado');}
+function removeCanal(name){store.config.canales=store.config.canales.filter(c=>c!==name);applyCatChange();toast('Canal eliminado');}
+function addCatItem(group,name){
+  name=(name||'').trim();if(!name)return;
+  if(CAT_ITEMS.some(c=>c.toLowerCase()===name.toLowerCase())){toast('Ese ítem ya existe');return;}
+  const g=store.config.cats.find(x=>x.group===group);if(!g)return;
+  g.items.push(name);store.config.clasif[name]=bucketFor(group,name);
+  applyCatChange();toast('Ítem agregado');
+}
+function removeCatItem(group,item){
+  if(catInUse(item)){toast('"'+item+'" tiene movimientos: no se puede eliminar');return;}
+  const g=store.config.cats.find(x=>x.group===group);if(!g)return;
+  g.items=g.items.filter(x=>x!==item);delete store.config.clasif[item];
+  applyCatChange();toast('Ítem eliminado');
+}
+function addPayment(name){
+  name=(name||'').trim();if(!name)return;
+  if(PAYMENTS.some(p=>p.toLowerCase()===name.toLowerCase())){toast('Esa forma de pago ya existe');return;}
+  store.config.payments.push(name);applyCatChange();toast('Forma de pago agregada');
+}
+function removePayment(idx){
+  if(idx===0){toast('Efectivo no se puede eliminar');return;}
+  if(paymentInUse(idx)){toast('Esa forma de pago tiene movimientos: no se puede eliminar');return;}
+  store.config.payments.splice(idx,1);
+  Object.values(store.periodos).forEach(p=>{Object.values(p.sessions||{}).forEach(s=>(s.movimientos||[]).forEach(m=>{if(m.pago>idx)m.pago--;}));(p.admin||[]).forEach(m=>{if(m.pago>idx)m.pago--;});});
+  applyCatChange();toast('Forma de pago eliminada');
+}
+
+/* ---------- Administración ---------- */
+let aTipo='S';
+function getAdmin(){if(!state.admin)state.admin=[];return state.admin;}
+function calcAdmin(){
+  const a=getAdmin();const cats={};CAT_ITEMS.forEach(c=>cats[c]=0);
+  let ingresos=0,egresos=0;
+  a.forEach(m=>{
+    if(m.tipo==='E')ingresos+=m.monto;else egresos+=m.monto;
+    if(CAT_ITEMS.includes(m.concepto))cats[m.concepto]+=(m.tipo==='S'?m.monto:-m.monto);
+  });
+  return {cats,ingresos,egresos,total:egresos-ingresos,list:a};
+}
+function fillAdminSelectors(){
+  const ac=document.getElementById('aConcepto');
+  if(!ac.options.length){
+    let html='';
+    CATS.forEach(g=>{html+=`<optgroup label="${g.group}">`;g.items.forEach(c=>html+=`<option value="${c}">${c}</option>`);html+='</optgroup>';});
+    html+='<option value="Otro ingreso">Otro ingreso</option>';
+    ac.innerHTML=html;
+  }
+  const ap=document.getElementById('aPago');
+  if(!ap.options.length)ap.innerHTML=PAYMENTS.map((p,i)=>`<option value="${i}"${i===2?' selected':''}>${p}</option>`).join('');
+  const ad=document.getElementById('aDia');
+  if(!ad.options.length){let h='<option value="">—</option>';for(let d=1;d<=31;d++)h+=`<option value="${d}">${d}</option>`;ad.innerHTML=h;}
+}
+function renderAdmin(){
+  fillAdminSelectors();
+  const c=calcAdmin();const cl=store.config.clasif;
+  let cogs=0,labor=0,fijo=0;
+  CAT_ITEMS.forEach(cat=>{const v=Math.abs(c.cats[cat]);if(!v)return;const b=cl[cat]||'VAR';
+    if(b==='COGS')cogs+=v;else if(b==='LABOR')labor+=v;else if(b==='FIJO')fijo+=v;});
+  document.getElementById('akEgr').textContent=money(c.egresos);
+  document.getElementById('akCogs').textContent=money(cogs);
+  document.getElementById('akLabor').textContent=money(labor);
+  document.getElementById('akFijo').textContent=money(fijo);
+  document.getElementById('adminMes').textContent=`${state.mes} ${state.anio}`;
+  const tb=document.getElementById('adminBody');
+  if(!c.list.length)tb.innerHTML='<tr><td colspan="7" class="empty">Sin costos de administración cargados</td></tr>';
+  else tb.innerHTML=c.list.map((m,i)=>`<tr>
+    <td class="mut">${m.dia||'—'}</td>
+    <td>${m.concepto}</td>
+    <td class="mut">${m.detalle||''}</td>
+    <td><span class="chip">${PAYMENTS[m.pago]}</span></td>
+    <td class="num pos">${m.tipo==='E'?money(m.monto):''}</td>
+    <td class="num neg">${m.tipo==='S'?money(m.monto):''}</td>
+    <td class="num"><button class="del" data-i="${i}">×</button></td></tr>`).join('');
+  const mm=calcMonth();
+  renderCatBlock('adminCat',c.cats,mm.ventas,true);
+}
+function addAdmin(){
+  const concepto=document.getElementById('aConcepto').value;
+  const detalle=document.getElementById('aDetalle').value.trim();
+  const dia=document.getElementById('aDia').value;
+  const pago=Number(document.getElementById('aPago').value);
+  const monto=parseNum(document.getElementById('aMonto').value);
+  if(!monto){toast('Ingresá un monto');return;}
+  getAdmin().push({dia:dia?Number(dia):null,concepto,detalle,pago,tipo:aTipo,monto});
+  document.getElementById('aDetalle').value='';document.getElementById('aMonto').value='';
+  save();renderAdmin();document.getElementById('aMonto').focus();
+}
+
+/* ---------- Estadísticas ---------- */
+const PALETTE=['#DD01D0','#7B2FF7','#00b4d8','#39d98a','#ffb020','#ff5a6e','#c77dff','#ff8fab','#4cc9f0','#f72585','#b5179e','#888888'];
+let statScope='mes';
+function pctOf(v,base){return base>0?pct(v/base):'—';}
+function fmtShort(n){n=Math.round(n||0);const s=n<0?'-':'';n=Math.abs(n);if(n>=1e6)return s+'$'+(n/1e6).toFixed(1).replace('.',',')+'M';if(n>=1e3)return s+'$'+Math.round(n/1e3)+'k';return s+'$'+n;}
+function mesShort(m){return String(m).slice(0,3);}
+function costBreakdown(cats,ventas){
+  const cl=store.config.clasif;let cogs=0,labor=0,fijo=0,varOp=0,excl=0;
+  CAT_ITEMS.forEach(c=>{const v=Math.abs(cats[c]||0);if(!v)return;const b=cl[c]||'VAR';
+    if(b==='COGS')cogs+=v;else if(b==='LABOR')labor+=v;else if(b==='FIJO')fijo+=v;else if(b==='EXCL')excl+=v;else varOp+=v;});
+  const prime=cogs+labor,fixedBE=labor+fijo,variableBE=cogs+varOp;
+  const cm=ventas-variableBE,cmRatio=ventas>0?cm/ventas:0;
+  const be=cmRatio>0?fixedBE/cmRatio:null;
+  const margenSeg=(be!==null&&ventas>0)?(ventas-be)/ventas:null;
+  const resultado=ventas-cogs-labor-fijo-varOp;
+  const margenBruto=ventas>0?(ventas-cogs)/ventas:0;
+  return {ventas,cogs,labor,fijo,varOp,excl,prime,fixedBE,variableBE,cm,cmRatio,be,margenSeg,resultado,margenBruto,cats};
+}
+function calcStats(m){m=m||calcMonth();const st=costBreakdown(m.cats,m.ventas);st.nd=operatedDays();return st;}
+function operatedDays(){const days=new Set();orderedKeys().forEach(k=>{const s=state.sessions[k];if(s&&s.movimientos.some(x=>x.tipo==='E'))days.add(k.slice(0,-1));});return days.size;}
+function countVentas(){let n=0;orderedKeys().forEach(k=>{const s=state.sessions[k];if(s)s.movimientos.forEach(m=>{if(m.tipo==='E'&&INGRESO_CONCEPTS.includes(m.concepto))n++;});});return n;}
+function ventasPorDia(){const arr=[];let last=1;for(let d=1;d<=31;d++){let v=0;['M','T','N'].forEach(t=>{const s=state.sessions[d+t];if(s)s.movimientos.forEach(m=>{if(m.tipo==='E'&&INGRESO_CONCEPTS.includes(m.concepto))v+=m.monto;});});arr.push({label:String(d),value:v});if(v>0)last=d;}return arr.slice(0,last);}
+function ventasPorTurno(){const r={M:0,T:0,N:0};orderedKeys().forEach(k=>{const t=k.slice(-1);const s=state.sessions[k];if(s)s.movimientos.forEach(m=>{if(m.tipo==='E'&&INGRESO_CONCEPTS.includes(m.concepto))r[t]+=m.monto;});});return [{label:'Mañana (M)',value:r.M},{label:'Tarde (T)',value:r.T},{label:'Noche (N)',value:r.N}];}
+function canalAgg(pers){const r={};pers.forEach(p=>withState(p,()=>{orderedKeys().forEach(k=>{const s=state.sessions[k];if(s)s.movimientos.forEach(m=>{if(m.tipo==='E'&&INGRESO_CONCEPTS.includes(m.concepto)){const c=m.canal||'Sin canal';r[c]=(r[c]||0)+m.monto;}});});}));return Object.keys(r).map(c=>({label:c,value:r[c]}));}
+function turnoDetail(){const rows=[];orderedKeys().forEach(k=>{const s=state.sessions[k];if(!s||(!s.movimientos.length&&denomTotal(s.cierre||{})===0))return;const c=calcSession(k);const nv=s.movimientos.filter(m=>m.tipo==='E'&&INGRESO_CONCEPTS.includes(m.concepto)).length;const efvo=c.cuenta[0].ing;rows.push({key:k,ventas:c.ventas,nv,ticket:nv?c.ventas/nv:0,efvo,digital:c.ventas-efvo,egresos:c.egresos,dif:c.arqueado?c.dif:null});});return rows;}
+function metodoSeries(m){return m.cuenta.map((cu,i)=>({label:PAYMENTS[i],value:cu.ing}));}
+function grupoSeries(cats){return CATS.map(g=>({label:g.group,value:g.items.reduce((a,c)=>a+Math.abs(cats[c]||0),0)}));}
+function withState(p,fn){const prev=state;state=p;try{return fn();}finally{state=prev;}}
+function monthAgg(p){return withState(p,()=>calcMonth());}
+function periodosOfYear(y){return Object.values(store.periodos).filter(p=>Number(p.anio)===Number(y)).sort((a,b)=>MONTHS.indexOf(a.mes)-MONTHS.indexOf(b.mes));}
+function allYears(){return [...new Set(Object.values(store.periodos).map(p=>Number(p.anio)))].sort((a,b)=>a-b);}
+function sumAggs(list){let ventas=0,egresos=0;const cats={};CAT_ITEMS.forEach(c=>cats[c]=0);const cuenta=PAYMENTS.map(p=>({p,ing:0,egr:0}));list.forEach(m=>{ventas+=m.ventas;egresos+=m.egresos;CAT_ITEMS.forEach(c=>cats[c]+=(m.cats[c]||0));(m.cuenta||[]).forEach((cu,i)=>{cuenta[i].ing+=cu.ing;cuenta[i].egr+=cu.egr;});});return {ventas,egresos,cats,cuenta};}
+function fromAgg(agg){const st=costBreakdown(agg.cats,agg.ventas);st.egresos=agg.egresos;return st;}
+
+/* ---- Gráficos SVG ---- */
+function svgBars(series,color){
+  color=color||'var(--magenta)';
+  if(!series.length||series.every(s=>!s.value))return '<div class="empty">Sin datos</div>';
+  const n=series.length,w=Math.max(560,n*40),h=250,pt=22,pb=42,px=14,cw=w-px*2,ch=h-pt-pb;
+  const max=Math.max(1,...series.map(s=>s.value)),bw=cw/n;let out=`<line x1="${px}" y1="${pt+ch}" x2="${w-px}" y2="${pt+ch}" stroke="#2a2a2a"/>`;
+  series.forEach((s,i)=>{const bh=(s.value/max)*ch,x=px+i*bw,y=pt+ch-bh;
+    out+=`<rect x="${(x+bw*0.18).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*0.64).toFixed(1)}" height="${Math.max(0,bh).toFixed(1)}" rx="3" fill="${color}"/>`;
+    if(s.value>0)out+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" font-size="10" fill="#aaa">${fmtShort(s.value)}</text>`;
+    out+=`<text x="${(x+bw/2).toFixed(1)}" y="${h-pb+16}" text-anchor="middle" font-size="11" fill="#888">${s.label}</text>`;});
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;min-width:${Math.min(w,560)}px;height:auto" xmlns="http://www.w3.org/2000/svg">${out}</svg>`;
+}
+function arcPath(cx,cy,r,ir,a0,a1,col){const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1),xi1=cx+ir*Math.cos(a1),yi1=cy+ir*Math.sin(a1),xi0=cx+ir*Math.cos(a0),yi0=cy+ir*Math.sin(a0),large=(a1-a0)>Math.PI?1:0;return `<path d="M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} L${xi1.toFixed(2)} ${yi1.toFixed(2)} A${ir} ${ir} 0 ${large} 0 ${xi0.toFixed(2)} ${yi0.toFixed(2)} Z" fill="${col}"/>`;}
+function svgDonut(series){
+  const data=series.filter(s=>s.value>0);if(!data.length)return '<div class="empty">Sin datos</div>';
+  const total=data.reduce((a,s)=>a+s.value,0),cx=90,cy=90,r=74,ir=46;let out='';
+  if(data.length===1){out=`<circle cx="${cx}" cy="${cy}" r="${(r+ir)/2}" fill="none" stroke="${PALETTE[0]}" stroke-width="${r-ir}"/>`;}
+  else{let a0=-Math.PI/2;data.forEach((s,i)=>{const a1=a0+(s.value/total)*2*Math.PI;out+=arcPath(cx,cy,r,ir,a0,a1,PALETTE[i%PALETTE.length]);a0=a1;});}
+  const legend=data.map((s,i)=>{const col=data.length===1?PALETTE[0]:PALETTE[i%PALETTE.length];const pc=(s.value/total*100).toFixed(1).replace('.',',');return `<div class="lgd"><span class="sw" style="background:${col}"></span><span class="ln">${s.label}</span><span class="lv">${fmtShort(s.value)} · ${pc}%</span></div>`;}).join('');
+  return `<div class="donutWrap"><svg viewBox="0 0 180 180" width="150" height="150" xmlns="http://www.w3.org/2000/svg">${out}<text x="90" y="88" text-anchor="middle" font-size="10" fill="#888">Total</text><text x="90" y="104" text-anchor="middle" font-size="12" fill="#fff">${fmtShort(total)}</text></svg><div class="legend">${legend}</div></div>`;
+}
+function barPanel(title,series,color){return `<div class="panel" style="margin-top:16px"><h3>${title}</h3><div class="chartBox">${svgBars(series,color)}</div></div>`;}
+function donutPanel(title,series){return `<div class="panel"><h3>${title}</h3>${svgDonut(series)}</div>`;}
+function kpiHTML(items){return items.map(k=>`<div class="kpi ${k.accent?'accent':''}"><div class="lbl">${k.lbl}</div><div class="val ${k.cls||''}">${k.val}</div><div class="sub">${k.sub||''}</div></div>`).join('');}
+function costStructureHTML(st){
+  const V=st.ventas;const rows=[
+    ['Ventas',V,'100%','',true],['− Costo mercadería (COGS)',st.cogs,pctOf(st.cogs,V),'neg'],
+    ['= Margen bruto',V-st.cogs,pctOf(V-st.cogs,V),'',true],['− Costo laboral',st.labor,pctOf(st.labor,V),'neg'],
+    ['Prime Cost (memo)',st.prime,pctOf(st.prime,V),'accent'],['− Gastos fijos',st.fijo,pctOf(st.fijo,V),'neg'],
+    ['− Gastos variables op.',st.varOp,pctOf(st.varOp,V),'neg'],['= Resultado operativo',st.resultado,pctOf(st.resultado,V),st.resultado>=0?'pos':'neg',true]];
+  const body=rows.map(r=>`<tr${r[4]?' style="font-weight:500"':''}><td style="${r[3]==='accent'?'color:var(--magenta)':''}">${r[0]}</td><td class="num ${r[3]==='accent'?'':(r[3]||'')}">${money(r[1])}</td><td class="num mut">${r[2]}</td></tr>`).join('');
+  const note=st.excl>0?`<div class="hint">No computado (Excluir): ${money(st.excl)}.</div>`:'';
+  return `<div class="panel"><h3>Estructura de costos</h3><table><thead><tr><th>Concepto</th><th class="num">Monto</th><th class="num">% ventas</th></tr></thead><tbody>${body}</tbody></table>${note}</div>`;
+}
+function breakEvenHTML(st,extra,sw){
+  sw=sw||'período';const V=st.ventas;
+  return `<div class="panel"><h3>Punto de equilibrio</h3>
+    <div class="arqline"><span class="mut">Costos fijos (laboral + fijos)</span><b>${money(st.fixedBE)}</b></div>
+    <div class="arqline"><span class="mut">Costos variables (mercad. + var.)</span><b>${money(st.variableBE)}</b></div>
+    <div class="arqline"><span class="mut">Margen de contribución</span><b>${money(st.cm)} · ${pct(st.cmRatio)}</b></div>
+    <div class="diffbox" style="margin-top:14px"><div class="dl">Punto de equilibrio (${sw})</div><div class="dv" style="color:var(--magenta)">${st.be!==null?money(st.be):'—'}</div></div>
+    ${extra||''}
+    <div class="arqline"><span class="mut">Ventas del ${sw}</span><b>${money(V)}</b></div>
+    <div class="arqline"><span>Margen de seguridad</span><b class="${st.margenSeg===null?'':(st.margenSeg>=0?'pos':'neg')}">${st.margenSeg!==null?pct(st.margenSeg):'—'}</b></div>
+    <div class="hint" style="margin-top:10px">${st.margenSeg!==null?(st.margenSeg>=0?`Las ventas superan el equilibrio por ${money(V-st.be)}.`:`Estás ${money(st.be-V)} por debajo del equilibrio.`):'Sin ventas para calcular.'}</div></div>`;
+}
+function turnoDetailPanel(){
+  const rows=turnoDetail();
+  const body=rows.length?rows.map(r=>`<tr><td>${r.key}</td><td class="num">${money(r.ventas)}</td><td class="num mut">${r.nv}</td><td class="num">${r.ticket?money(r.ticket):'—'}</td><td class="num">${money(r.efvo)}</td><td class="num">${money(r.digital)}</td><td class="num neg">${r.egresos?money(r.egresos):'—'}</td><td class="num ${r.dif===null?'mut':(r.dif===0?'pos':(r.dif<0?'neg':'warnc'))}">${r.dif===null?'—':money(r.dif)}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">Sin turnos con datos</td></tr>';
+  return `<div class="panel" style="margin-top:16px"><h3>Detalle por turno</h3><div style="overflow-x:auto"><table><thead><tr><th>Turno</th><th class="num">Ventas</th><th class="num">N°</th><th class="num">Ticket</th><th class="num">Efectivo</th><th class="num">Digital</th><th class="num">Egresos</th><th class="num">Dif. arqueo</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+}
+function renderStats(){
+  const seg=document.getElementById('statScopeSeg');
+  seg.querySelector('button[data-sc="anio"]').textContent='Año '+state.anio;
+  seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sc===statScope));
+  document.getElementById('statScopeLbl').textContent=statScope==='mes'?`${state.mes} ${state.anio}`:(statScope==='anio'?`${state.anio} · meses cargados`:'Todos los años');
+  if(statScope==='mes')renderStatsMes();else if(statScope==='anio')renderStatsAnio();else renderStatsHist();
+  renderClasif();
+}
+function renderStatsMes(){
+  const m=calcMonth(),st=calcStats(m),V=st.ventas,nv=countVentas();
+  document.getElementById('statKpis').innerHTML=kpiHTML([
+    {lbl:'Ventas',val:money(V),accent:true,sub:`${nv} ventas`},
+    {lbl:'Ticket promedio',val:nv?money(V/nv):'—'},
+    {lbl:'Prime Cost',val:pctOf(st.prime,V),sub:money(st.prime)},
+    {lbl:'Resultado operativo',val:pctOf(st.resultado,V),cls:st.resultado>=0?'pos':'neg',sub:money(st.resultado)}]);
+  const extra=`<div class="arqline"><span class="mut">Equilibrio diario (${st.nd} días op.)</span><b>${st.be!==null?money(st.be/st.nd):'—'}</b></div>`;
+  document.getElementById('statBody').innerHTML=
+    barPanel('Ventas por día',ventasPorDia())+
+    `<div class="statAuto" style="margin-top:16px">${donutPanel('Ventas por turno',ventasPorTurno())}${donutPanel('Ventas por canal',canalAgg([state]))}${donutPanel('Ventas por método',metodoSeries(m))}${donutPanel('Egresos por grupo',grupoSeries(m.cats))}</div>`+
+    `<div class="stat2" style="margin-top:16px">${costStructureHTML(st)}${breakEvenHTML(st,extra,'mes')}</div>`+
+    turnoDetailPanel();
+}
+function renderStatsAnio(){
+  const pers=periodosOfYear(state.anio),aggs=pers.map(monthAgg),agg=sumAggs(aggs),st=fromAgg(agg),V=st.ventas;
+  document.getElementById('statKpis').innerHTML=kpiHTML([
+    {lbl:`Ventas ${state.anio}`,val:money(V),accent:true,sub:`${pers.length} mes(es)`},
+    {lbl:'Egresos',val:money(agg.egresos),sub:pctOf(agg.egresos,V)+' s/ventas'},
+    {lbl:'Prime Cost',val:pctOf(st.prime,V),sub:money(st.prime)},
+    {lbl:'Resultado operativo',val:pctOf(st.resultado,V),cls:st.resultado>=0?'pos':'neg',sub:money(st.resultado)}]);
+  const ventasMes=pers.map((p,i)=>({label:mesShort(p.mes),value:aggs[i].ventas}));
+  const egresosMes=pers.map((p,i)=>({label:mesShort(p.mes),value:aggs[i].egresos}));
+  const extra=`<div class="arqline"><span class="mut">Equilibrio mensual prom.</span><b>${st.be!==null&&pers.length?money(st.be/pers.length):'—'}</b></div>`;
+  const tbl=pers.map((p,i)=>{const stM=fromAgg(aggs[i]);return `<tr><td>${p.mes}</td><td class="num">${money(aggs[i].ventas)}</td><td class="num neg">${aggs[i].egresos?money(aggs[i].egresos):'—'}</td><td class="num ${stM.resultado>=0?'pos':'neg'}">${money(stM.resultado)}</td><td class="num mut">${pctOf(stM.resultado,aggs[i].ventas)}</td></tr>`;}).join('')||'<tr><td colspan="5" class="empty">Sin datos en el año</td></tr>';
+  document.getElementById('statBody').innerHTML=
+    barPanel('Ventas por mes',ventasMes)+barPanel('Egresos por mes',egresosMes,'#ff5a6e')+
+    `<div class="statAuto" style="margin-top:16px">${donutPanel('Ventas por canal (año)',canalAgg(pers))}${donutPanel('Ventas por método (año)',metodoSeries(agg))}${donutPanel('Egresos por grupo (año)',grupoSeries(agg.cats))}</div>`+
+    `<div class="stat2" style="margin-top:16px">${costStructureHTML(st)}${breakEvenHTML(st,extra,'año')}</div>`+
+    `<div class="panel" style="margin-top:16px"><h3>Resumen por mes</h3><div style="overflow-x:auto"><table><thead><tr><th>Mes</th><th class="num">Ventas</th><th class="num">Egresos</th><th class="num">Resultado</th><th class="num">%</th></tr></thead><tbody>${tbl}</tbody></table></div></div>`;
+}
+function renderStatsHist(){
+  const ys=allYears(),perYear=ys.map(y=>({y,agg:sumAggs(periodosOfYear(y).map(monthAgg))})),total=sumAggs(perYear.map(x=>x.agg)),st=fromAgg(total),V=st.ventas;
+  document.getElementById('statKpis').innerHTML=kpiHTML([
+    {lbl:'Ventas histórico',val:money(V),accent:true,sub:`${ys.length} año(s)`},
+    {lbl:'Egresos',val:money(total.egresos),sub:pctOf(total.egresos,V)+' s/ventas'},
+    {lbl:'Prime Cost',val:pctOf(st.prime,V),sub:money(st.prime)},
+    {lbl:'Resultado operativo',val:pctOf(st.resultado,V),cls:st.resultado>=0?'pos':'neg',sub:money(st.resultado)}]);
+  const ventasAno=perYear.map(x=>({label:String(x.y),value:x.agg.ventas}));
+  const egresosAno=perYear.map(x=>({label:String(x.y),value:x.agg.egresos}));
+  const tbl=perYear.map(x=>{const stY=fromAgg(x.agg);return `<tr><td>${x.y}</td><td class="num">${money(x.agg.ventas)}</td><td class="num neg">${x.agg.egresos?money(x.agg.egresos):'—'}</td><td class="num ${stY.resultado>=0?'pos':'neg'}">${money(stY.resultado)}</td></tr>`;}).join('')||'<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+  document.getElementById('statBody').innerHTML=
+    barPanel('Ventas por año',ventasAno)+barPanel('Egresos por año',egresosAno,'#ff5a6e')+
+    `<div class="statAuto" style="margin-top:16px">${donutPanel('Ventas por canal',canalAgg(Object.values(store.periodos)))}${donutPanel('Ventas por método',metodoSeries(total))}${donutPanel('Egresos por grupo',grupoSeries(total.cats))}</div>`+
+    `<div class="panel" style="margin-top:16px"><h3>Resumen por año</h3><div style="overflow-x:auto"><table><thead><tr><th>Año</th><th class="num">Ventas</th><th class="num">Egresos</th><th class="num">Resultado</th></tr></thead><tbody>${tbl}</tbody></table></div></div>`;
+}
+function renderClasif(){
+  const cats=calcMonth().cats,cl=store.config.clasif;let g='';
+  CATS.forEach(grp=>{const items=grp.items.filter(c=>Math.abs(cats[c])>0.5);if(!items.length)return;
+    g+=`<div class="catgrp"><div class="gh">${grp.group}</div>`;
+    items.forEach(c=>{const opts=CLASIF_OPTS.map(o=>`<option value="${o[0]}"${cl[c]===o[0]?' selected':''}>${o[1]}</option>`).join('');
+      g+=`<div class="catrow" style="grid-template-columns:1fr 140px 120px"><span>${c}</span><select class="sel" data-cat="${c}" style="padding:5px 8px;font-size:13px">${opts}</select><span class="amt">${money(Math.abs(cats[c]))}</span></div>`;});
+    g+='</div>';});
+  document.getElementById('clasifGrid').innerHTML=g||'<div class="empty">Sin gastos cargados en el mes</div>';
+}
+
+/* ---------- Autenticación y permisos ---------- */
+const AUTH_KEY='caja_sexshop_user';
+let currentUser=null;
+function firstAllowedTab(){return (currentUser&&ALL_TABS.find(t=>currentUser.tabs.includes(t)))||'diario';}
+function setCurrent(name){const u=store.users[name];if(!u)return false;currentUser={name,role:u.role,tabs:u.tabs.slice()};return true;}
+function showLogin(){document.getElementById('loginOverlay').style.display='flex';document.getElementById('liUser').value='';document.getElementById('liPass').value='';document.getElementById('liErr').textContent='';document.getElementById('liUser').focus();}
+function doLogin(){
+  const name=document.getElementById('liUser').value.trim();
+  const pass=document.getElementById('liPass').value;
+  const u=store.users[name];
+  if(!u||u.pass!==hashPass(pass)){document.getElementById('liErr').textContent='Usuario o clave incorrectos';return;}
+  setCurrent(name);sessionStorage.setItem(AUTH_KEY,name);enterApp();
+}
+function logout(){currentUser=null;sessionStorage.removeItem(AUTH_KEY);showLogin();}
+function enterApp(){
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('userName').textContent=currentUser.name;
+  applyPermissions();renderAll();autoTipo();switchView(firstAllowedTab());
+}
+function applyPermissions(){
+  const isAdmin=currentUser.role==='admin';
+  document.querySelectorAll('.tab').forEach(t=>t.style.display=currentUser.tabs.includes(t.dataset.view)?'':'none');
+  document.getElementById('newPeriodo').style.display=isAdmin?'':'none';
+  document.getElementById('usersPanel').style.display=isAdmin?'':'none';
+}
+function renderUsers(){
+  if(!currentUser||currentUser.role!=='admin')return;
+  const tb=document.getElementById('usersBody');
+  tb.innerHTML=Object.keys(store.users).map(name=>{
+    const u=store.users[name];
+    const tabs=u.role==='admin'?'Todas':u.tabs.map(t=>TAB_NAMES[t]).join(', ')||'—';
+    return `<tr><td><b>${name}</b></td><td class="mut">${u.role==='admin'?'Administrador':'Usuario'}</td>
+      <td class="mut">${tabs}</td>
+      <td class="num">${name==='admin'?'':`<button class="del" data-u="${name}">×</button>`}</td></tr>`;
+  }).join('');
+  const wrap=document.getElementById('uTabs');
+  if(!wrap.dataset.built){
+    wrap.innerHTML=OP_TABS.map(t=>`<label class="uTab"><input type="checkbox" value="${t}">${TAB_NAMES[t]}</label>`).join('');
+    wrap.dataset.built='1';
+  }
+}
+function addUser(){
+  const name=document.getElementById('uName').value.trim();
+  const pass=document.getElementById('uPass').value;
+  if(!name){toast('Poné un nombre de usuario');return;}
+  if(store.users[name]){toast('Ese usuario ya existe');return;}
+  if(!pass){toast('Poné una clave');return;}
+  const tabs=[...document.querySelectorAll('#uTabs input:checked')].map(i=>i.value);
+  if(!tabs.length){toast('Marcá al menos una pestaña');return;}
+  store.users[name]={role:'user',pass:hashPass(pass),tabs};
+  document.getElementById('uName').value='';document.getElementById('uPass').value='';
+  document.querySelectorAll('#uTabs input:checked').forEach(i=>i.checked=false);
+  save();renderUsers();toast('Usuario agregado');
+}
+function removeUser(name){
+  if(name==='admin')return;
+  if(!confirm(`¿Eliminar al usuario "${name}"?`))return;
+  delete store.users[name];save();renderUsers();toast('Usuario eliminado');
+}
+function setAdminPass(){
+  const p=document.getElementById('adminPass').value;
+  if(!p){toast('Poné una clave');return;}
+  store.users.admin.pass=hashPass(p);document.getElementById('adminPass').value='';save();toast('Clave de administrador actualizada');
+}
+
+/* ---------- Render maestro ---------- */
+function renderAll(){renderPeriodos();renderDiario();renderAdmin();renderMensual();renderStats();renderAjustes();renderUsers();}
+
+/* ---------- Eventos ---------- */
+function switchView(v){
+  if(currentUser&&!currentUser.tabs.includes(v))return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  ['diario','admin','mensual','stats','ajustes'].forEach(x=>document.getElementById('view-'+x).style.display=x===v?'':'none');
+  if(v==='admin')renderAdmin();
+  if(v==='mensual')renderMensual();
+  if(v==='stats')renderStats();
+  if(v==='ajustes'){renderAjustes();renderUsers();}
+}
+function addMovement(){
+  const concepto=document.getElementById('mConcepto').value;
+  const canal=document.getElementById('mCanal').value;
+  const nvta=document.getElementById('mNVta').value.trim();
+  const pago=Number(document.getElementById('mPago').value);
+  const monto=parseNum(document.getElementById('mMonto').value);
+  if(!monto){toast('Ingresá un monto');return;}
+  const key=sessKey(cur.day,cur.sess);
+  const s=getSession(key);
+  s.movimientos.push({concepto,canal,nvta,pago,tipo:mTipo,monto});
+  document.getElementById('mNVta').value='';
+  document.getElementById('mMonto').value='';
+  save();renderDiario();
+  document.getElementById('mMonto').focus();
+}
+function bind(){
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view));
+  document.getElementById('daySel').onchange=e=>{cur.day=Number(e.target.value);renderDiario();};
+  document.querySelectorAll('#sessSeg button').forEach(b=>b.onclick=()=>{cur.sess=b.dataset.s;renderDiario();});
+  document.getElementById('mConcepto').onchange=autoTipo;
+  document.querySelectorAll('#mTipo button').forEach(b=>b.onclick=()=>{mTipo=b.dataset.t;syncTipoUI();});
+  document.getElementById('addMov').onclick=addMovement;
+  document.getElementById('mMonto').onkeydown=e=>{if(e.key==='Enter')addMovement();};
+  document.getElementById('mNVta').onkeydown=e=>{if(e.key==='Enter')document.getElementById('mMonto').focus();};
+
+  document.getElementById('movBody').onclick=e=>{
+    const b=e.target.closest('.del');if(!b)return;
+    const key=sessKey(cur.day,cur.sess);getSession(key).movimientos.splice(Number(b.dataset.i),1);
+    save();renderDiario();
+  };
+  document.getElementById('denomInputs').oninput=e=>{
+    const inp=e.target.closest('input[data-d]');if(!inp)return;
+    const d=inp.dataset.d;const key=sessKey(cur.day,cur.sess);const s=getSession(key);
+    s.cierre[d]=parseNum(inp.value);
+    document.getElementById('dt_'+d).textContent=money(d*s.cierre[d]);
+    document.getElementById('contadoTot').textContent=money(denomTotal(s.cierre));
+    const c=calcSession(key);
+    const ad=document.getElementById('arqDif');ad.textContent=c.arqueado?money(c.dif):'—';
+    ad.className='dv '+(!c.arqueado?'mut':(c.dif===0?'pos':(c.dif<0?'neg':'warnc')));
+    const kd=document.getElementById('kDif');kd.textContent=c.arqueado?money(c.dif):'—';
+    kd.className='val '+(!c.arqueado?'':(c.dif===0?'pos':(c.dif<0?'neg':'warnc')));
+    save();
+  };
+  document.getElementById('aperturaMontoInput').oninput=e=>{
+    state.aperturaMonto=parseNum(e.target.value);save();renderDiario();renderMensual();
+  };
+  document.getElementById('aperturaInputs').oninput=e=>{
+    const inp=e.target.closest('input[data-ad]');if(!inp)return;
+    const d=inp.dataset.ad;state.apertura[d]=parseNum(inp.value);
+    document.getElementById('at_'+d).textContent=money(d*state.apertura[d]);
+    document.getElementById('aperturaTot').textContent=money(denomTotal(state.apertura));
+    save();renderDiario();renderMensual();
+  };
+
+  document.getElementById('periodoSel').onchange=e=>{store.activo=e.target.value;state=store.periodos[store.activo];cur={day:1,sess:'M'};save();renderAll();switchView('diario');};
+  document.getElementById('newPeriodo').onclick=newPeriodo;
+  document.getElementById('exportBtn').onclick=exportXlsx;
+  document.getElementById('backupBtn').onclick=backupJson;
+  document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange=importJson;
+  document.getElementById('wipeBtn').onclick=wipeMonth;
+  document.getElementById('seedBtn').onclick=seedJunio;
+  document.getElementById('addAdmin').onclick=addAdmin;
+  document.getElementById('aMonto').onkeydown=e=>{if(e.key==='Enter')addAdmin();};
+  document.querySelectorAll('#aTipo button').forEach(b=>b.onclick=()=>{aTipo=b.dataset.t;document.querySelectorAll('#aTipo button').forEach(x=>{const on=x.dataset.t===aTipo;x.classList.toggle('onE',on&&aTipo==='E');x.classList.toggle('onS',on&&aTipo==='S');});});
+  document.getElementById('adminBody').onclick=e=>{const b=e.target.closest('.del');if(!b)return;getAdmin().splice(Number(b.dataset.i),1);save();renderAdmin();};
+  document.querySelectorAll('#statScopeSeg button').forEach(b=>b.onclick=()=>{statScope=b.dataset.sc;renderStats();});
+  // Editor categorías / formas de pago
+  document.getElementById('payEditor').onclick=e=>{const x=e.target.closest('.x[data-payidx]');if(x)removePayment(Number(x.dataset.payidx));};
+  document.getElementById('addPay').onclick=()=>{const inp=document.getElementById('newPay');addPayment(inp.value);inp.value='';};
+  document.getElementById('newPay').onkeydown=e=>{if(e.key==='Enter'){addPayment(e.target.value);e.target.value='';}};
+  document.getElementById('canalEditor').onclick=e=>{const x=e.target.closest('.x[data-canal]');if(x)removeCanal(decodeURIComponent(x.dataset.canal));};
+  document.getElementById('addCanal').onclick=()=>{const inp=document.getElementById('newCanal');addCanal(inp.value);inp.value='';};
+  document.getElementById('newCanal').onkeydown=e=>{if(e.key==='Enter'){addCanal(e.target.value);e.target.value='';}};
+  document.getElementById('catEditor').onclick=e=>{
+    const x=e.target.closest('.x[data-cat]');
+    if(x){removeCatItem(decodeURIComponent(x.dataset.group),decodeURIComponent(x.dataset.cat));return;}
+    const add=e.target.closest('.addcat');
+    if(add){const inp=add.parentNode.querySelector('input');addCatItem(decodeURIComponent(add.dataset.group),inp.value);inp.value='';}
+  };
+  document.getElementById('catEditor').onkeydown=e=>{const inp=e.target.closest('input[data-group]');if(inp&&e.key==='Enter'){addCatItem(decodeURIComponent(inp.dataset.group),inp.value);inp.value='';}};
+  document.getElementById('clasifGrid').onchange=e=>{
+    const sel=e.target.closest('select[data-cat]');if(!sel)return;
+    store.config.clasif[sel.dataset.cat]=sel.value;save();renderStats();
+  };
+  // Auth
+  document.getElementById('liBtn').onclick=doLogin;
+  document.getElementById('liPass').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+  document.getElementById('liUser').onkeydown=e=>{if(e.key==='Enter')document.getElementById('liPass').focus();};
+  document.getElementById('logoutBtn').onclick=logout;
+  document.getElementById('cloudStatus').onclick=()=>{if(cloudEnabled())cloudPull();else{switchView('ajustes');toast('Configurá la conexión en Ajustes');}};
+  document.getElementById('cloudConnect').onclick=()=>{
+    const u=document.getElementById('cloudUrl').value,t=document.getElementById('cloudToken').value;
+    if(!u.trim()){toast('Pegá la URL /exec');return;}
+    saveCloudCfg(u,t);cloudReady=false;setCloudStatus('sync');toast('Conectando…');cloudPull();renderAjustes();
+  };
+  document.getElementById('cloudDisconnect').onclick=()=>{
+    if(!confirm('Desconectar la nube en este dispositivo? Seguís con los datos locales.'))return;
+    saveCloudCfg('','');cloudReady=false;setCloudStatus('off');renderAjustes();toast('Desconectado');
+  };
+  document.getElementById('addUser').onclick=addUser;
+  document.getElementById('setAdminPass').onclick=setAdminPass;
+  document.getElementById('usersBody').onclick=e=>{const b=e.target.closest('.del');if(b)removeUser(b.dataset.u);};
+}
+function seedJunio(){
+  if(!confirm('Precargar los datos reales de Junio 2026. Si ya cargaste datos en ese mes, se reemplazan. ¿Seguir?'))return;
+  store.periodos['2026-06']=loadSeed();store.activo='2026-06';
+  state=store.periodos['2026-06'];cur={day:1,sess:'M'};save();renderAll();switchView('mensual');toast('Junio 2026 precargado');
+}
+function newPeriodo(){
+  // sugerir mes siguiente al último
+  const keys=Object.keys(store.periodos).sort();
+  const last=store.periodos[keys[keys.length-1]];
+  let mi=MONTHS.indexOf(last.mes),anio=last.anio;
+  mi++;if(mi>11){mi=0;anio++;}
+  const label=prompt('Nuevo período (Mes Año):',`${MONTHS[mi]} ${anio}`);
+  if(!label)return;
+  const parts=label.trim().split(/\s+/);
+  const mes=parts[0], an=Number(parts[1])||anio;
+  const k=`${an}-${String(MONTHS.indexOf(mes)+1||mi+1).padStart(2,'0')}`;
+  if(store.periodos[k]){toast('Ese mes ya existe');store.activo=k;}
+  else{
+    const p=emptyPeriodo(mes,an); // caja arranca en 0
+    const mstr=prompt('Monto de caja inicial para '+mes+' '+an+' ($):','0');
+    p.aperturaMonto=parseNum(mstr||'0');
+    store.periodos[k]=p;store.activo=k;
+  }
+  state=store.periodos[store.activo];cur={day:1,sess:'M'};save();renderAll();switchView('diario');toast('Período creado');
+}
+function wipeMonth(){
+  if(!confirm(`¿Borrar todos los datos de ${state.mes} ${state.anio}? No se puede deshacer.`))return;
+  store.periodos[store.activo]=emptyPeriodo(state.mes,state.anio);
+  state=store.periodos[store.activo];save();renderAll();toast('Mes borrado');
+}
+
+/* ---------- Export Excel ---------- */
+function exportXlsx(){
+  const m=calcMonth();
+  const wb=XLSX.utils.book_new();
+  // Hoja Mes
+  const mes=[];
+  mes.push([`SALTA SEX SHOP · Caja`]);
+  mes.push([`${state.mes} ${state.anio}`]);
+  mes.push([]);
+  mes.push(['Ventas del mes',m.ventas]);
+  mes.push(['Egresos del mes',m.egresos]);
+  mes.push(['% egresos s/ventas',m.ventas>0?m.egresos/m.ventas:0]);
+  mes.push(['Saldo caja',m.saldoCaja]);
+  mes.push(['Diferencia arqueo acum.',m.dif]);
+  mes.push([]);
+  mes.push(['SALDO POR CUENTA','Ingresos','Egresos','Saldo']);
+  m.cuenta.forEach(c=>mes.push([c.p,c.ing,c.egr,c.saldo]));
+  mes.push([]);
+  mes.push(['CATEGORÍA','Grupo','Monto','% ventas']);
+  CATS.forEach(g=>g.items.forEach(c=>{const v=Math.abs(m.cats[c]);if(v>0.5)mes.push([c,g.group,v,m.ventas>0?v/m.ventas:0]);}));
+  const wsMes=XLSX.utils.aoa_to_sheet(mes);
+  wsMes['!cols']=[{wch:26},{wch:16},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsMes,'Mes');
+
+  // Hoja Movimientos (todas las turnos, plano)
+  const mov=[['Día','Turno','Concepto','Canal','N° Vta','Forma de pago','Entrada','Salida']];
+  orderedKeys().forEach(k=>{
+    const s=state.sessions[k];if(!s||!s.movimientos.length)return;
+    const day=k.slice(0,-1),sess=k.slice(-1);
+    s.movimientos.forEach(mv=>mov.push([day,sess,mv.concepto,mv.canal||'',mv.nvta||'',PAYMENTS[mv.pago],mv.tipo==='E'?mv.monto:'',mv.tipo==='S'?mv.monto:'']));
+  });
+  const wsMov=XLSX.utils.aoa_to_sheet(mov);
+  wsMov['!cols']=[{wch:6},{wch:7},{wch:22},{wch:12},{wch:9},{wch:16},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsMov,'Movimientos');
+
+  // Hoja Arqueo
+  const arq=[['Turno','Caja inicial','Ingresos efvo','Egresos efvo','Esperado','Contado','Diferencia']];
+  orderedKeys().forEach(k=>{
+    const s=state.sessions[k];if(!s||(!s.movimientos.length&&denomTotal(s.cierre||{})===0))return;
+    const c=calcSession(k);
+    arq.push([k,c.cajaIni,c.ingEfvo,c.egrEfvo,c.esperado,c.contado,c.arqueado?c.dif:'sin arqueo']);
+  });
+  const wsArq=XLSX.utils.aoa_to_sheet(arq);
+  wsArq['!cols']=[{wch:8},{wch:13},{wch:13},{wch:13},{wch:13},{wch:13},{wch:13}];
+  XLSX.utils.book_append_sheet(wb,wsArq,'Arqueo');
+
+  // Hoja Administración
+  const ad=calcAdmin();
+  const adm=[['Día','Concepto','Detalle','Forma de pago','Entrada','Salida']];
+  ad.list.forEach(x=>adm.push([x.dia||'',x.concepto,x.detalle||'',PAYMENTS[x.pago],x.tipo==='E'?x.monto:'',x.tipo==='S'?x.monto:'']));
+  adm.push([]);adm.push(['Total egresos administración','','','','',ad.egresos]);
+  const wsAdm=XLSX.utils.aoa_to_sheet(adm);
+  wsAdm['!cols']=[{wch:6},{wch:22},{wch:26},{wch:16},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsAdm,'Administración');
+
+  // Hoja P&L (consolidado caja + administración)
+  const st=calcStats();
+  const pl=[['ESTADO DE RESULTADOS (caja + administración)'],[`${state.mes} ${state.anio}`],[]];
+  pl.push(['Ventas',st.ventas,1]);
+  pl.push(['Costo mercadería (COGS)',st.cogs,st.ventas>0?st.cogs/st.ventas:0]);
+  pl.push(['Margen bruto',st.ventas-st.cogs,st.ventas>0?(st.ventas-st.cogs)/st.ventas:0]);
+  pl.push(['Costo laboral',st.labor,st.ventas>0?st.labor/st.ventas:0]);
+  pl.push(['Prime Cost',st.prime,st.ventas>0?st.prime/st.ventas:0]);
+  pl.push(['Gastos fijos',st.fijo,st.ventas>0?st.fijo/st.ventas:0]);
+  pl.push(['Gastos variables op.',st.varOp,st.ventas>0?st.varOp/st.ventas:0]);
+  pl.push(['Resultado operativo',st.resultado,st.ventas>0?st.resultado/st.ventas:0]);
+  pl.push([]);
+  pl.push(['Punto de equilibrio (mes)',st.be||0]);
+  pl.push(['Ratio de contribución','',st.cmRatio]);
+  pl.push(['Margen de seguridad','',st.margenSeg||0]);
+  const wsPl=XLSX.utils.aoa_to_sheet(pl);
+  wsPl['!cols']=[{wch:28},{wch:16},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsPl,'P&L');
+
+  XLSX.writeFile(wb,`Caja_SaltaSexShop_${state.mes}_${state.anio}.xlsx`);
+  toast('Excel exportado');
+}
+function backupJson(){
+  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`caja_sexshop_respaldo_${Date.now()}.json`;a.click();toast('Respaldo descargado');
+}
+function importJson(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&d.periodos){store=d;if(!store.config)store.config={};if(!store.config.cats)store.config.cats=DEFAULT_CATS.map(g=>({group:g.group,items:g.items.slice()}));if(!store.config.payments)store.config.payments=DEFAULT_PAYMENTS.slice();if(!store.config.canales)store.config.canales=DEFAULT_CANALES.slice();refreshCats();store.config.clasif=Object.assign(defaultClasif(),store.config.clasif||{});if(!store.periodos[store.activo])store.activo=Object.keys(store.periodos)[0];Object.values(store.periodos).forEach(p=>{if(!p.admin)p.admin=[];if(p.aperturaMonto==null)p.aperturaMonto=denomTotal(p.apertura||{});migrateSessKeys(p);});ensureUsers();state=store.periodos[store.activo];save();if(currentUser&&store.users[currentUser.name]){setCurrent(currentUser.name);applyPermissions();renderAll();switchView(firstAllowedTab());toast('Respaldo importado');}else{logout();}}else toast('Archivo inválido');}catch(err){toast('Error al leer el archivo');}};
+  r.readAsText(f);e.target.value='';
+}
+
+/* ---------- Init ---------- */
+load();loadCloudCfg();fillSelectors();bind();
+(function(){
+  const su=sessionStorage.getItem(AUTH_KEY);
+  if(su&&store.users[su]&&setCurrent(su)){enterApp();}else{showLogin();}
+})();
+setCloudStatus(cloudEnabled()?'sync':'off');
+cloudPull();
+</script>
+</body>
+</html>
