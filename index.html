@@ -766,10 +766,11 @@ function calcMonth(){
     saldoAcum+=(c.ventas+c.otrosIng-c.egresos);
     daily.push({key:k,ventas:c.ventas,egresos:c.egresos,saldo:saldoAcum,dif:c.arqueado?c.dif:null});
   });
+  // Integrar administración: por cuenta (forma de pago), en categorías y en egresos
+  const ad=calcAdmin();
+  (state.admin||[]).forEach(mv=>{if(mv.pago!=null&&cuenta[mv.pago]){if(mv.tipo==='S')cuenta[mv.pago].egr+=mv.monto;else cuenta[mv.pago].ing+=mv.monto;}});
   cuenta.forEach((cu,i)=>{cu.saldo=cu.ing-cu.egr; if(i===0)cu.saldo+=aperturaTotal();});
   const saldoCaja=cuenta.reduce((a,c)=>a+c.saldo,0);
-  // Integrar administración en el rollup de categorías y egresos
-  const ad=calcAdmin();
   CAT_ITEMS.forEach(cat=>cats[cat]+=ad.cats[cat]);
   const cajaEgresos=egresos;
   const egresosTot=cajaEgresos+ad.egresos;
