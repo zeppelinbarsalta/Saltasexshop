@@ -1021,14 +1021,21 @@ function renderAdmin(){
   document.getElementById('adminMes').textContent=`${state.mes} ${state.anio}`;
   const tb=document.getElementById('adminBody');
   if(!c.list.length)tb.innerHTML='<tr><td colspan="7" class="empty">Sin costos de administración cargados</td></tr>';
-  else tb.innerHTML=c.list.map((m,i)=>`<tr>
-    <td class="mut">${m.dia||'—'}</td>
-    <td>${m.concepto}</td>
-    <td class="mut">${m.detalle||''}</td>
-    <td><span class="chip">${PAYMENTS[m.pago]}</span></td>
-    <td class="num pos">${m.tipo==='E'?money(m.monto):''}</td>
-    <td class="num neg">${m.tipo==='S'?money(m.monto):''}</td>
-    <td class="num"><button class="del" data-i="${i}">×</button></td></tr>`).join('');
+  else{
+    const rows=c.list.map((m,i)=>({m,i})).sort((a,b)=>{
+      const da=(a.m.dia===''||a.m.dia==null)?999:Number(a.m.dia);
+      const db=(b.m.dia===''||b.m.dia==null)?999:Number(b.m.dia);
+      return da-db;
+    });
+    tb.innerHTML=rows.map(({m,i})=>`<tr>
+      <td class="mut">${m.dia||'—'}</td>
+      <td>${m.concepto}</td>
+      <td class="mut">${m.detalle||''}</td>
+      <td><span class="chip">${PAYMENTS[m.pago]}</span></td>
+      <td class="num pos">${m.tipo==='E'?money(m.monto):''}</td>
+      <td class="num neg">${m.tipo==='S'?money(m.monto):''}</td>
+      <td class="num"><button class="del" data-i="${i}">×</button></td></tr>`).join('');
+  }
   const mm=calcMonth();
   renderCatBlock('adminCat',c.cats,mm.ventas,true);
 }
@@ -1209,9 +1216,15 @@ function doLogin(){
   setCurrent(key);sessionStorage.setItem(AUTH_KEY,key);enterApp();
 }
 function logout(){currentUser=null;sessionStorage.removeItem(AUTH_KEY);showLogin();}
+function defaultDayForState(){
+  const now=new Date();
+  if(state&&state.mes===MONTHS[now.getMonth()]&&Number(state.anio)===now.getFullYear())return now.getDate();
+  return 1;
+}
 function enterApp(){
   document.getElementById('loginOverlay').style.display='none';
   document.getElementById('userName').textContent=currentUser.name;
+  cur.day=defaultDayForState();
   applyPermissions();renderAll();autoTipo();switchView(firstAllowedTab());
 }
 function applyPermissions(){
@@ -1327,7 +1340,7 @@ function bind(){
     save();renderDiario();renderMensual();
   };
 
-  document.getElementById('periodoSel').onchange=e=>{store.activo=e.target.value;state=store.periodos[store.activo];cur={day:1,sess:'M'};save();renderAll();switchView('diario');};
+  document.getElementById('periodoSel').onchange=e=>{store.activo=e.target.value;state=store.periodos[store.activo];cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('diario');};
   document.getElementById('newPeriodo').onclick=newPeriodo;
   document.getElementById('exportBtn').onclick=exportXlsx;
   document.getElementById('backupBtn').onclick=backupJson;
@@ -1380,7 +1393,7 @@ function bind(){
 function seedJunio(){
   if(!confirm('Precargar los datos reales de Junio 2026. Si ya cargaste datos en ese mes, se reemplazan. ¿Seguir?'))return;
   store.periodos['2026-06']=loadSeed();store.activo='2026-06';
-  state=store.periodos['2026-06'];cur={day:1,sess:'M'};save();renderAll();switchView('mensual');toast('Junio 2026 precargado');
+  state=store.periodos['2026-06'];cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('mensual');toast('Junio 2026 precargado');
 }
 function newPeriodo(){
   // sugerir mes siguiente al último
@@ -1400,7 +1413,7 @@ function newPeriodo(){
     p.aperturaMonto=parseNum(mstr||'0');
     store.periodos[k]=p;store.activo=k;
   }
-  state=store.periodos[store.activo];cur={day:1,sess:'M'};save();renderAll();switchView('diario');toast('Período creado');
+  state=store.periodos[store.activo];cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('diario');toast('Período creado');
 }
 function wipeMonth(){
   if(!confirm(`¿Borrar todos los datos de ${state.mes} ${state.anio}? No se puede deshacer.`))return;
