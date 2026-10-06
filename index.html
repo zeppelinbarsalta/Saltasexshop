@@ -106,6 +106,8 @@ tr:last-child td{border-bottom:none}
 .mut{color:var(--g1)}
 .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;border:1px solid var(--line);color:var(--g2)}
 .del{color:var(--g1);cursor:pointer;background:none;border:none;font-size:16px;line-height:1;padding:2px 6px;border-radius:6px}
+.edit{color:var(--g1);cursor:pointer;background:none;border:none;font-size:14px;line-height:1;padding:2px 6px;border-radius:6px;margin-right:2px}
+.edit:hover{color:var(--magenta);background:#2a1428}
 .del:hover{color:var(--neg);background:#2a1418}
 .empty{color:var(--g1);text-align:center;padding:26px;font-style:italic}
 
@@ -608,6 +610,7 @@ function saveCloudCfg(url,token){CLOUD.url=(url||'').trim();CLOUD.token=(token||
 let store, state; // store = {activo, periodos:{}}; state = periodo activo
 let cur = {day:1, sess:'M'};
 let mTipo='E';
+let editingMov=null;
 
 function emptyPeriodo(mes,anio){
   return {mes,anio,apertura:blankDenoms(),aperturaMonto:0,sessions:{},admin:[]};
@@ -830,6 +833,7 @@ function renderDiario(){
   fillSelectors();
   const key=sessKey(cur.day,cur.sess);
   const s=getSession(key);
+  if(editingMov!=null&&!(s.movimientos&&s.movimientos[editingMov]))cancelMovEdit();
   const c=calcSession(key);
   document.getElementById('cajaIniLbl').textContent=money(c.cajaIni);
   document.getElementById('kVentas').textContent=money(c.ventas);
@@ -845,9 +849,10 @@ function renderDiario(){
   if(!s.movimientos.length){tb.innerHTML='<tr><td colspan="8" class="empty">Sin movimientos cargados</td></tr>';}
   else{
     let run=0;
+    const isAdmin=currentUser&&currentUser.role==='admin';
     tb.innerHTML=s.movimientos.map((m,i)=>{
       run+=(m.tipo==='E'?m.monto:-m.monto);
-      return `<tr>
+      return `<tr${editingMov===i?' style="background:#2a0f28"':''}>
         <td>${m.concepto}${m.tipo==='E'&&!INGRESO_CONCEPTS.includes(m.concepto)?' <span class="chip">ajuste+</span>':''}</td>
         <td class="mut">${m.canal?`<span class="chip">${m.canal}</span>`:'—'}</td>
         <td class="mut">${m.nvta||'—'}</td>
@@ -855,7 +860,7 @@ function renderDiario(){
         <td class="num pos">${m.tipo==='E'?money(m.monto):''}</td>
         <td class="num neg">${m.tipo==='S'?money(m.monto):''}</td>
         <td class="num">${money(run)}</td>
-        <td class="num"><button class="del" data-i="${i}">×</button></td>
+        <td class="num">${isAdmin?`<button class="edit" data-i="${i}" title="editar">✎</button>`:''}<button class="del" data-i="${i}" title="eliminar">×</button></td>
       </tr>`;
     }).join('');
   }
@@ -985,6 +990,8 @@ function removePayment(idx){
 
 /* ---------- Administración ---------- */
 let aTipo='S';
+let editingAdmin=null;
+function syncATipo(){document.querySelectorAll('#aTipo button').forEach(x=>{const on=x.dataset.t===aTipo;x.classList.toggle('onE',on&&aTipo==='E');x.classList.toggle('onS',on&&aTipo==='S');});}
 function getAdmin(){if(!state.admin)state.admin=[];return state.admin;}
 function calcAdmin(){
   const a=getAdmin();const cats={};CAT_ITEMS.forEach(c=>cats[c]=0);
@@ -1011,6 +1018,7 @@ function fillAdminSelectors(){
 function renderAdmin(){
   fillAdminSelectors();
   const c=calcAdmin();const cl=store.config.clasif;
+  if(editingAdmin!=null&&!(c.list&&c.list[editingAdmin]))cancelAdminEdit();
   let cogs=0,labor=0,fijo=0;
   CAT_ITEMS.forEach(cat=>{const v=Math.abs(c.cats[cat]);if(!v)return;const b=cl[cat]||'VAR';
     if(b==='COGS')cogs+=v;else if(b==='LABOR')labor+=v;else if(b==='FIJO')fijo+=v;});
@@ -1027,14 +1035,15 @@ function renderAdmin(){
       const db=(b.m.dia===''||b.m.dia==null)?999:Number(b.m.dia);
       return da-db;
     });
-    tb.innerHTML=rows.map(({m,i})=>`<tr>
+    const isAdmin=currentUser&&currentUser.role==='admin';
+    tb.innerHTML=rows.map(({m,i})=>`<tr${editingAdmin===i?' style="background:#2a0f28"':''}>
       <td class="mut">${m.dia||'—'}</td>
       <td>${m.concepto}</td>
       <td class="mut">${m.detalle||''}</td>
       <td><span class="chip">${PAYMENTS[m.pago]}</span></td>
       <td class="num pos">${m.tipo==='E'?money(m.monto):''}</td>
       <td class="num neg">${m.tipo==='S'?money(m.monto):''}</td>
-      <td class="num"><button class="del" data-i="${i}">×</button></td></tr>`).join('');
+      <td class="num">${isAdmin?`<button class="edit" data-i="${i}" title="editar">✎</button>`:''}<button class="del" data-i="${i}" title="eliminar">×</button></td></tr>`).join('');
   }
   const mm=calcMonth();
   renderCatBlock('adminCat',c.cats,mm.ventas,true);
@@ -1046,10 +1055,31 @@ function addAdmin(){
   const pago=Number(document.getElementById('aPago').value);
   const monto=parseNum(document.getElementById('aMonto').value);
   if(!monto){toast('Ingresá un monto');return;}
-  getAdmin().push({dia:dia?Number(dia):null,concepto,detalle,pago,tipo:aTipo,monto});
+  const a=getAdmin();
+  if(editingAdmin!=null&&a[editingAdmin]){
+    a[editingAdmin]={dia:dia?Number(dia):null,concepto,detalle,pago,tipo:aTipo,monto};
+    cancelAdminEdit();toast('Movimiento actualizado');
+  }else{
+    a.push({dia:dia?Number(dia):null,concepto,detalle,pago,tipo:aTipo,monto});
+  }
   document.getElementById('aDetalle').value='';document.getElementById('aMonto').value='';
   save();renderAdmin();document.getElementById('aMonto').focus();
 }
+function startEditAdmin(i){
+  if(!(currentUser&&currentUser.role==='admin'))return;
+  const m=getAdmin()[i];if(!m)return;
+  document.getElementById('aConcepto').value=m.concepto;
+  document.getElementById('aDetalle').value=m.detalle||'';
+  document.getElementById('aDia').value=m.dia||'';
+  document.getElementById('aPago').value=m.pago;
+  aTipo=m.tipo;syncATipo();
+  document.getElementById('aMonto').value=m.monto;
+  editingAdmin=i;
+  document.getElementById('addAdmin').textContent='Guardar';
+  renderAdmin();
+  const ai=document.getElementById('aMonto');ai.focus();ai.select();
+}
+function cancelAdminEdit(){editingAdmin=null;const b=document.getElementById('addAdmin');if(b)b.textContent='Agregar';}
 
 /* ---------- Estadísticas ---------- */
 const PALETTE=['#DD01D0','#7B2FF7','#00b4d8','#39d98a','#ffb020','#ff5a6e','#c77dff','#ff8fab','#4cc9f0','#f72585','#b5179e','#888888'];
@@ -1295,26 +1325,48 @@ function addMovement(){
   if(!monto){toast('Ingresá un monto');return;}
   const key=sessKey(cur.day,cur.sess);
   const s=getSession(key);
-  s.movimientos.push({concepto,canal,nvta,pago,tipo:mTipo,monto});
+  if(editingMov!=null&&s.movimientos[editingMov]){
+    s.movimientos[editingMov]={concepto,canal,nvta,pago,tipo:mTipo,monto};
+    cancelMovEdit();toast('Movimiento actualizado');
+  }else{
+    s.movimientos.push({concepto,canal,nvta,pago,tipo:mTipo,monto});
+  }
   document.getElementById('mNVta').value='';
   document.getElementById('mMonto').value='';
   save();renderDiario();
   document.getElementById('mMonto').focus();
 }
+function startEditMov(i){
+  if(!(currentUser&&currentUser.role==='admin'))return;
+  const s=getSession(sessKey(cur.day,cur.sess));const m=s.movimientos[i];if(!m)return;
+  document.getElementById('mConcepto').value=m.concepto;
+  document.getElementById('mCanal').value=m.canal||'';
+  document.getElementById('mNVta').value=m.nvta||'';
+  document.getElementById('mPago').value=m.pago;
+  mTipo=m.tipo;syncTipoUI();
+  document.getElementById('mMonto').value=m.monto;
+  editingMov=i;
+  document.getElementById('addMov').textContent='Guardar';
+  renderDiario();
+  const mi=document.getElementById('mMonto');mi.focus();mi.select();
+}
+function cancelMovEdit(){editingMov=null;document.getElementById('addMov').textContent='Agregar';}
 function bind(){
   document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view));
-  document.getElementById('daySel').onchange=e=>{cur.day=Number(e.target.value);renderDiario();};
-  document.querySelectorAll('#sessSeg button').forEach(b=>b.onclick=()=>{cur.sess=b.dataset.s;renderDiario();});
+  document.getElementById('daySel').onchange=e=>{cur.day=Number(e.target.value);cancelMovEdit();renderDiario();};
+  document.querySelectorAll('#sessSeg button').forEach(b=>b.onclick=()=>{cur.sess=b.dataset.s;cancelMovEdit();renderDiario();});
   document.getElementById('mConcepto').onchange=autoTipo;
   document.querySelectorAll('#mTipo button').forEach(b=>b.onclick=()=>{mTipo=b.dataset.t;syncTipoUI();});
   document.getElementById('addMov').onclick=addMovement;
-  document.getElementById('mMonto').onkeydown=e=>{if(e.key==='Enter')addMovement();};
+  document.getElementById('mMonto').onkeydown=e=>{if(e.key==='Enter')addMovement();else if(e.key==='Escape'&&editingMov!=null){cancelMovEdit();document.getElementById('mMonto').value='';document.getElementById('mNVta').value='';renderDiario();}};
   document.getElementById('mNVta').onkeydown=e=>{if(e.key==='Enter')document.getElementById('mMonto').focus();};
 
   document.getElementById('movBody').onclick=e=>{
+    const ed=e.target.closest('.edit');
+    if(ed){startEditMov(Number(ed.dataset.i));return;}
     const b=e.target.closest('.del');if(!b)return;
     const key=sessKey(cur.day,cur.sess);getSession(key).movimientos.splice(Number(b.dataset.i),1);
-    save();renderDiario();
+    cancelMovEdit();save();renderDiario();
   };
   document.getElementById('denomInputs').oninput=e=>{
     const inp=e.target.closest('input[data-d]');if(!inp)return;
@@ -1340,7 +1392,7 @@ function bind(){
     save();renderDiario();renderMensual();
   };
 
-  document.getElementById('periodoSel').onchange=e=>{store.activo=e.target.value;state=store.periodos[store.activo];cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('diario');};
+  document.getElementById('periodoSel').onchange=e=>{store.activo=e.target.value;state=store.periodos[store.activo];cancelMovEdit();cancelAdminEdit();cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('diario');};
   document.getElementById('newPeriodo').onclick=newPeriodo;
   document.getElementById('exportBtn').onclick=exportXlsx;
   document.getElementById('backupBtn').onclick=backupJson;
@@ -1349,9 +1401,14 @@ function bind(){
   document.getElementById('wipeBtn').onclick=wipeMonth;
   document.getElementById('seedBtn').onclick=seedJunio;
   document.getElementById('addAdmin').onclick=addAdmin;
-  document.getElementById('aMonto').onkeydown=e=>{if(e.key==='Enter')addAdmin();};
-  document.querySelectorAll('#aTipo button').forEach(b=>b.onclick=()=>{aTipo=b.dataset.t;document.querySelectorAll('#aTipo button').forEach(x=>{const on=x.dataset.t===aTipo;x.classList.toggle('onE',on&&aTipo==='E');x.classList.toggle('onS',on&&aTipo==='S');});});
-  document.getElementById('adminBody').onclick=e=>{const b=e.target.closest('.del');if(!b)return;getAdmin().splice(Number(b.dataset.i),1);save();renderAdmin();};
+  document.querySelectorAll('#aTipo button').forEach(b=>b.onclick=()=>{aTipo=b.dataset.t;syncATipo();});
+  document.getElementById('adminBody').onclick=e=>{
+    const ed=e.target.closest('.edit');
+    if(ed){startEditAdmin(Number(ed.dataset.i));return;}
+    const b=e.target.closest('.del');if(!b)return;
+    getAdmin().splice(Number(b.dataset.i),1);cancelAdminEdit();save();renderAdmin();
+  };
+  document.getElementById('aMonto').onkeydown=e=>{if(e.key==='Enter')addAdmin();else if(e.key==='Escape'&&editingAdmin!=null){cancelAdminEdit();document.getElementById('aMonto').value='';document.getElementById('aDetalle').value='';renderAdmin();}};
   document.querySelectorAll('#statScopeSeg button').forEach(b=>b.onclick=()=>{statScope=b.dataset.sc;renderStats();});
   // Editor categorías / formas de pago
   document.getElementById('payEditor').onclick=e=>{const x=e.target.closest('.x[data-payidx]');if(x)removePayment(Number(x.dataset.payidx));};
@@ -1393,7 +1450,7 @@ function bind(){
 function seedJunio(){
   if(!confirm('Precargar los datos reales de Junio 2026. Si ya cargaste datos en ese mes, se reemplazan. ¿Seguir?'))return;
   store.periodos['2026-06']=loadSeed();store.activo='2026-06';
-  state=store.periodos['2026-06'];cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('mensual');toast('Junio 2026 precargado');
+  state=store.periodos['2026-06'];cancelMovEdit();cancelAdminEdit();cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('mensual');toast('Junio 2026 precargado');
 }
 function newPeriodo(){
   // sugerir mes siguiente al último
@@ -1413,7 +1470,7 @@ function newPeriodo(){
     p.aperturaMonto=parseNum(mstr||'0');
     store.periodos[k]=p;store.activo=k;
   }
-  state=store.periodos[store.activo];cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('diario');toast('Período creado');
+  state=store.periodos[store.activo];cancelMovEdit();cancelAdminEdit();cur={day:defaultDayForState(),sess:'M'};save();renderAll();switchView('diario');toast('Período creado');
 }
 function wipeMonth(){
   if(!confirm(`¿Borrar todos los datos de ${state.mes} ${state.anio}? No se puede deshacer.`))return;
