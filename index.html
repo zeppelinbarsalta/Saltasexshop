@@ -661,53 +661,68 @@ function ensureUsers(){
   if(!store.users.admin)store.users.admin={role:'admin',pass:hashPass('220708'),tabs:ALL_TABS.slice()};
   store.users.admin.role='admin';store.users.admin.tabs=ALL_TABS.slice();
 }
-function save(localOnly){store.updatedAt=Date.now();localStorage.setItem(LS_KEY,JSON.stringify(store));if(!localOnly&&CLOUD.url)cloudPush();}
+function save(localOnly){store.updatedAt=Date.now();localStorage.setItem(LS_KEY,JSON.stringify(store));if(!localOnly&&CLOUD.url)schedulePush();}
 
-/* ---------- Sincronización con la nube ---------- */
-let cloudPushTimer=null, cloudReady=false;
+/* ---------- Sincronización con la nube (con verificación) ---------- */
+let cloudPushTimer=null, cloudReady=false, pushPending=false;
 function cloudEnabled(){return !!CLOUD.url;}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function setCloudStatus(s){
   const el=document.getElementById('cloudStatus');if(!el)return;
-  const map={off:['⚪ Local','sin nube'],sync:['☁ Sincronizando…','guardando'],cloud:['☁ Nube','sincronizado'],offline:['⚠ Sin conexión','reintenta al tocar']};
+  const map={off:['⚪ Local','sin nube'],sync:['☁ Guardando…','enviando a la nube'],cloud:['☁ Nube','guardado y verificado'],offline:['⚠ Sin guardar','tocá para reintentar']};
   const v=map[s]||map.off;el.textContent=v[0];el.title=v[1];el.dataset.st=s;
+}
+async function fetchRemote(){
+  try{
+    const r=await fetch(CLOUD.url+'?token='+encodeURIComponent(CLOUD.token),{method:'GET',cache:'no-store'});
+    const j=await r.json();
+    if(j&&j.ok)return j.data?JSON.parse(j.data):{__empty:true};
+    return null;
+  }catch(e){return null;}
+}
+function adoptRemote(remote){
+  if(!remote||!remote.periodos)return;
+  store=remote;normalizeStore(false);localStorage.setItem(LS_KEY,JSON.stringify(store));
+  if(currentUser){if(store.users[currentUser.name]){setCurrent(currentUser.name);applyPermissions();renderAll();}else{logout();}}
+}
+function schedulePush(){pushPending=true;setCloudStatus('sync');clearTimeout(cloudPushTimer);cloudPushTimer=setTimeout(()=>doPush(),700);}
+async function doPush(){
+  if(!cloudEnabled())return;
+  pushPending=false;
+  const stamp=store.updatedAt;
+  const payload=JSON.stringify({token:CLOUD.token,data:JSON.stringify(store)});
+  setCloudStatus('sync');
+  try{
+    await fetch(CLOUD.url,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
+    await sleep(700);
+    if(store.updatedAt!==stamp)return; // hubo otra edición: su propio push verificará
+    const remote=await fetchRemote();
+    const rt=(remote&&!remote.__empty)?(remote.updatedAt||0):-1;
+    if(rt===stamp){cloudReady=true;setCloudStatus('cloud');}
+    else if(rt>stamp){adoptRemote(remote);cloudReady=true;setCloudStatus('cloud');}
+    else{setCloudStatus('offline');clearTimeout(cloudPushTimer);cloudPushTimer=setTimeout(()=>doPush(),2500);} // no quedó: reintenta
+  }catch(e){setCloudStatus('offline');clearTimeout(cloudPushTimer);cloudPushTimer=setTimeout(()=>{if(cloudEnabled())doPush();},3000);}
+}
+function flushPush(){
+  if(!pushPending||!cloudEnabled())return;
+  pushPending=false;clearTimeout(cloudPushTimer);
+  const payload=JSON.stringify({token:CLOUD.token,data:JSON.stringify(store)});
+  try{navigator.sendBeacon(CLOUD.url,new Blob([payload],{type:'text/plain;charset=utf-8'}));}
+  catch(e){try{fetch(CLOUD.url,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});}catch(_){}}
 }
 async function cloudPull(){
   if(!cloudEnabled()){setCloudStatus('off');return;}
+  if(pushPending){doPush();return;}
   setCloudStatus('sync');
-  try{
-    const localT=(store&&store.updatedAt)||0;
-    const r=await fetch(CLOUD.url+'?token='+encodeURIComponent(CLOUD.token),{method:'GET'});
-    const j=await r.json();
-    if(!j||!j.ok)throw new Error('auth');
-    if(j.data){
-      const remote=JSON.parse(j.data);
-      const remoteT=(remote&&remote.updatedAt)||0;
-      if(remote&&remote.periodos&&remoteT>=localT){
-        // el remoto es más nuevo (o igual): lo adopto y cacheo tal cual (sin re-subir ni cambiar su fecha)
-        store=remote;normalizeStore(false);localStorage.setItem(LS_KEY,JSON.stringify(store));
-        if(currentUser){if(store.users[currentUser.name]){setCurrent(currentUser.name);applyPermissions();renderAll();}else{logout();}}
-      }else{
-        // lo local es más nuevo (cambios sin subir): los subo, no los piso
-        cloudPush(true);
-      }
-    }else{
-      cloudPush(true); // remoto vacío: subo lo local por primera vez
-    }
-    cloudReady=true;setCloudStatus('cloud');
-  }catch(e){setCloudStatus('offline');}
+  const localT=(store&&store.updatedAt)||0;
+  const remote=await fetchRemote();
+  if(remote===null){setCloudStatus('offline');return;}
+  if(remote.__empty){doPush();return;}
+  const rt=remote.updatedAt||0;
+  if(rt>=localT)adoptRemote(remote);else doPush();
+  cloudReady=true;setCloudStatus('cloud');
 }
-function cloudPush(now){
-  if(!cloudEnabled())return;
-  clearTimeout(cloudPushTimer);
-  const doPush=async()=>{
-    setCloudStatus('sync');
-    try{
-      await fetch(CLOUD.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:CLOUD.token,data:JSON.stringify(store)})});
-      setCloudStatus('cloud');
-    }catch(e){setCloudStatus('offline');}
-  };
-  if(now)doPush();else cloudPushTimer=setTimeout(doPush,900);
-}
+function cloudPush(now){if(now)doPush();else schedulePush();}
 
 /* ---------- Utils ---------- */
 const AR = new Intl.NumberFormat('es-AR',{maximumFractionDigits:0});
@@ -1446,6 +1461,21 @@ function bind(){
   document.getElementById('addUser').onclick=addUser;
   document.getElementById('setAdminPass').onclick=setAdminPass;
   document.getElementById('usersBody').onclick=e=>{const b=e.target.closest('.del');if(b)removeUser(b.dataset.u);};
+  // Sincronización entre pestañas, al volver el foco y al cerrar
+  window.addEventListener('storage',e=>{
+    if(e.key!==LS_KEY||!e.newValue)return;
+    try{const incoming=JSON.parse(e.newValue);
+      if(incoming&&incoming.updatedAt&&incoming.updatedAt!==((store&&store.updatedAt)||0)){
+        store=incoming;normalizeStore(false);
+        if(currentUser&&store.users[currentUser.name]){setCurrent(currentUser.name);applyPermissions();renderAll();}
+      }
+    }catch(err){}
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)flushPush();
+    else if(cloudEnabled())cloudPull();
+  });
+  window.addEventListener('pagehide',flushPush);
 }
 function seedJunio(){
   if(!confirm('Precargar los datos reales de Junio 2026. Si ya cargaste datos en ese mes, se reemplazan. ¿Seguir?'))return;
